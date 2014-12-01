@@ -8,11 +8,12 @@ func TestVersionParsing(t *testing.T) {
 		"1.0beta":   true,
 		"1.0.0.0.2": true,
 		"a.3_4":     true,
+		"A.2":       true,
 		"_1.2":      false,
 		".2":        false,
-		"A.2":       false,
 		"a.2Ø":      false,
 		"1.?":       false,
+		"1.-":       false,
 	}
 
 	for version, valid := range versions {

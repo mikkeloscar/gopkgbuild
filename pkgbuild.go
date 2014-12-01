@@ -286,9 +286,9 @@ func parseArrayValue(v string) string {
 
 // parse and validate a version string
 func parseVersion(s string) (Version, error) {
-	if len(s) > 0 && isAlphaOrNumeric(rune(s[0])) {
+	if len(s) > 0 && isAlphaNumeric(s[0]) {
 		for _, c := range s[1:] {
-			if !(isAlphaOrNumeric(c) || c == '_' || c == '+' || c == '.') {
+			if !(isAlphaNumeric(uint8(c)) || c == '_' || c == '+' || c == '.') {
 				return "", fmt.Errorf("invalid version string '%s'", s)
 			}
 		}
@@ -314,9 +314,4 @@ Loop:
 		}
 	}
 	return array, nil
-}
-
-// isAlphaOrNumeric reports whether r is in the range [a-z0-9] or not
-func isAlphaOrNumeric(r rune) bool {
-	return '0' <= r && r <= '9' || 'a' <= r && r <= 'z'
 }
