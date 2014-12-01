@@ -255,8 +255,7 @@ func parseValue(l *lexer) string {
 		return strings.Replace(token.val, "'\\''", "'", -1)
 	case itemArrayValue:
 		// discard all the next array items of the current array
-		// TODO this needs a testcase
-		for next := l.nextItem(); next.typ != itemArrayEnd; {
+		for l.nextItem().typ != itemArrayEnd {
 		}
 		return parseArrayValue(token.val)
 	default:

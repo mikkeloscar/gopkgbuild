@@ -27,3 +27,17 @@ func TestVersionParsing(t *testing.T) {
 		}
 	}
 }
+
+// Test parsing array value as value
+func TestValueParsing(t *testing.T) {
+	input := "pkgdesc=([0]=\"value1\" [1]=\"value2\")\n"
+
+	pkgb, err := parse(input)
+	if err != nil {
+		t.Error("parse should not fail")
+	}
+
+	if pkgb.Pkgdesc != "value1" {
+		t.Errorf("should equal 'value1', was: %#v", pkgb.Pkgdesc)
+	}
+}
