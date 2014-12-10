@@ -133,6 +133,6 @@ func TestVersionMethod(t *testing.T) {
 	version := "0:1.0-1"
 
 	if a.Version() != version {
-		t.Errorf("a (%s) shoudl be %s", a.Version(), version)
+		t.Errorf("a (%s) should be %s", a.Version(), version)
 	}
 }
