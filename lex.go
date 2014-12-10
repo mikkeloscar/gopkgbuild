@@ -321,9 +321,12 @@ func lexArray(l *lexer) stateFn {
 
 func lexNewline(l *lexer) stateFn {
 	for {
-		switch r := l.next(); {
-		case r == '\n':
+		switch l.next() {
+		case '\n':
 			l.ignore()
+			return lexEnv
+		case eof:
+			l.backup()
 			return lexEnv
 		default:
 			l.ignore() // ignore until newline

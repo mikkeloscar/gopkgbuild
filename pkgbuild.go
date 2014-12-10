@@ -43,16 +43,16 @@ var archs = map[string]Arch{
 //
 // parsing a PKGBUILD file without these fields will fail
 type PKGBUILD struct {
-	Pkgname      string
-	Pkgver       Version
-	Pkgrel       int
+	Pkgname      string  // required
+	Pkgver       Version // required
+	Pkgrel       int     // required
 	Pkgdir       string
 	Epoch        int
 	Pkgbase      string
 	Pkgdesc      string
-	Arch         []Arch
+	Arch         []Arch // required
 	URL          string
-	License      []string
+	License      []string // recommended
 	Groups       []string
 	Depends      []string
 	Optdepends   []string
@@ -76,8 +76,8 @@ type PKGBUILD struct {
 
 // Newer is true if p has a higher version number than p2
 func (p *PKGBUILD) Newer(p2 *PKGBUILD) bool {
-	if p.Epoch > p2.Epoch {
-		return true
+	if p.Epoch < p2.Epoch {
+		return false
 	}
 
 	if p.Pkgver.bigger(p2.Pkgver) {
@@ -91,7 +91,7 @@ func (p *PKGBUILD) Newer(p2 *PKGBUILD) bool {
 	return p.Pkgrel > p2.Pkgrel
 }
 
-// Older is true if p has a smaller version number that p2
+// Older is true if p has a smaller version number than p2
 func (p *PKGBUILD) Older(p2 *PKGBUILD) bool {
 	if p.Epoch < p2.Epoch {
 		return true

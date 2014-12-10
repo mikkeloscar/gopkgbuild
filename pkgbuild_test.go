@@ -30,7 +30,7 @@ func TestVersionParsing(t *testing.T) {
 
 // Test parsing array value as value
 func TestValueParsing(t *testing.T) {
-	input := "pkgdesc=([0]=\"value1\" [1]=\"value2\")\n"
+	input := "pkgdesc=([0]=\"value1\" [1]=\"value2\")"
 
 	pkgb, err := parse(input)
 	if err != nil {
@@ -39,5 +39,85 @@ func TestValueParsing(t *testing.T) {
 
 	if pkgb.Pkgdesc != "value1" {
 		t.Errorf("should equal 'value1', was: %#v", pkgb.Pkgdesc)
+	}
+}
+
+// Test Newer method
+func TestNewer(t *testing.T) {
+	a := &PKGBUILD{
+		Epoch:  0,
+		Pkgver: Version("1.0"),
+		Pkgrel: 1,
+	}
+	b := &PKGBUILD{
+		Epoch:  0,
+		Pkgver: Version("2.0"),
+		Pkgrel: 1,
+	}
+	c := &PKGBUILD{
+		Epoch:  1,
+		Pkgver: Version("1.0"),
+		Pkgrel: 1,
+	}
+	d := &PKGBUILD{
+		Epoch:  0,
+		Pkgver: Version("1.0"),
+		Pkgrel: 2,
+	}
+
+	if a.Newer(b) {
+		t.Errorf("a (%s) should not be newer than b (%s)", a.Version(), b.Version())
+	}
+
+	if b.Newer(c) {
+		t.Errorf("b (%s) should not be newer than c (%s)", b.Version(), c.Version())
+	}
+
+	if a.Newer(d) {
+		t.Error("a (%s) should not be newer than d (%s)", a.Version(), d.Version())
+	}
+
+	if a.Newer(a) {
+		t.Error("a (%s) should not be newer than itself", a.Version())
+	}
+}
+
+// Test Older method
+func TestOlder(t *testing.T) {
+	a := &PKGBUILD{
+		Epoch:  0,
+		Pkgver: Version("1.0"),
+		Pkgrel: 1,
+	}
+	b := &PKGBUILD{
+		Epoch:  0,
+		Pkgver: Version("2.0"),
+		Pkgrel: 1,
+	}
+	c := &PKGBUILD{
+		Epoch:  1,
+		Pkgver: Version("1.0"),
+		Pkgrel: 1,
+	}
+	d := &PKGBUILD{
+		Epoch:  0,
+		Pkgver: Version("1.0"),
+		Pkgrel: 2,
+	}
+
+	if !a.Older(b) {
+		t.Errorf("a (%s) should be older than b (%s)", a.Version(), b.Version())
+	}
+
+	if !b.Older(c) {
+		t.Errorf("b (%s) should be older than c (%s)", b.Version(), c.Version())
+	}
+
+	if !a.Older(d) {
+		t.Errorf("a (%s) should be older than d (%s)", a.Version(), d.Version())
+	}
+
+	if d.Older(d) {
+		t.Errorf("d (%s) should not be older than itself", d.Version())
 	}
 }
