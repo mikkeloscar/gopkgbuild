@@ -121,3 +121,18 @@ func TestOlder(t *testing.T) {
 		t.Errorf("d (%s) should not be older than itself", d.Version())
 	}
 }
+
+// Test Version method
+func TestVersionMethod(t *testing.T) {
+	a := &PKGBUILD{
+		Epoch:  0,
+		Pkgver: Version("1.0"),
+		Pkgrel: 1,
+	}
+
+	version := "0:1.0-1"
+
+	if a.Version() != version {
+		t.Errorf("a (%s) shoudl be %s", a.Version(), version)
+	}
+}
