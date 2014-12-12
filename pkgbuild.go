@@ -177,7 +177,6 @@ func parse(input string) (*PKGBUILD, error) {
 Loop:
 	for {
 		token := lexer.nextItem()
-		fmt.Printf("token: %#v\n", token)
 		switch token.typ {
 		case itemPkgname:
 			pkgbuild.Pkgname = parseValue(lexer)

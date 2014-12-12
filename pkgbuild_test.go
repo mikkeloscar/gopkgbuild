@@ -136,3 +136,23 @@ func TestVersionMethod(t *testing.T) {
 		t.Errorf("a (%s) should be %s", a.Version(), version)
 	}
 }
+
+// Test random pkgbuilds from Arch core
+func TestRandomCorePKGBUILDs(t *testing.T) {
+	pkgbs := []string{
+		"sudo",
+		"pacman",
+		"openssh",
+		"grub",
+		"glibc",
+		"systemd",
+	}
+
+	for _, pkgb := range pkgbs {
+		path := "./pkgbuilds/PKGBUILD_" + pkgb
+		_, err := ParsePKGBUILD(path)
+		if err != nil {
+			t.Errorf("PKGBUILD for %s did not parse: %s", pkgb, err.Error())
+		}
+	}
+}

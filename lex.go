@@ -239,7 +239,7 @@ func lexVariable(l *lexer) stateFn {
 				return lexValueType
 			}
 			return lexNewline
-		case r == ' ' || r == '(':
+		case r == ' ' || r == '(' || r == '-':
 			// found a function, skip it
 			return lexNewline
 		default:
