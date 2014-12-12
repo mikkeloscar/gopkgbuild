@@ -3,6 +3,7 @@ package pkgbuild
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -127,7 +128,14 @@ func MustParsePKGBUILD(path string) *PKGBUILD {
 // PKGBUILDs or within some kind of jail, e.g. a VM, container or chroot
 func ParsePKGBUILD(path string) (*PKGBUILD, error) {
 	// TODO parse maintainer if possible (read first x bytes of the file)
-	// TODO check for valid path
+	// check for valid path
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("%s: no such file", path)
+		}
+		return nil, err
+	}
+
 	source := fmt.Sprintf("source %s && set", path)
 	out, err := exec.Command("bash", "-c", source).Output()
 	if err != nil {
@@ -146,8 +154,19 @@ func parsePKGBUILD(input string) (*PKGBUILD, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO make sure the PKGBUILD has all it needs
-	fmt.Printf("pkgbuild: %#v\n", pkgbuild)
+
+	if !validPkgname(pkgbuild.Pkgname) {
+		return nil, fmt.Errorf("invalid pkgname '%s'", pkgbuild.Pkgname)
+	}
+
+	if !validPkgver(string(pkgbuild.Pkgver)) {
+		return nil, fmt.Errorf("invalid pkgver '%s'", pkgbuild.Pkgver)
+	}
+
+	if len(pkgbuild.Arch) == 0 {
+		return nil, fmt.Errorf("Arch missing")
+	}
+
 	return pkgbuild, nil
 }
 
@@ -285,14 +304,10 @@ func parseArrayValue(v string) string {
 
 // parse and validate a version string
 func parseVersion(s string) (Version, error) {
-	if len(s) > 0 && isAlphaNumeric(s[0]) {
-		for _, c := range s[1:] {
-			if !(isAlphaNumeric(uint8(c)) || c == '_' || c == '+' || c == '.') {
-				return "", fmt.Errorf("invalid version string '%s'", s)
-			}
-		}
+	if validPkgver(s) {
 		return Version(s), nil
 	}
+
 	return "", fmt.Errorf("invalid version string '%s'", s)
 }
 
@@ -313,4 +328,57 @@ Loop:
 		}
 	}
 	return array, nil
+}
+
+// check if name is a valid pkgname format
+func validPkgname(name string) bool {
+	if len(name) < 1 {
+		return false
+	}
+
+	if name[0] == '-' {
+		return false
+	}
+
+	for _, r := range name {
+		if !isValidPkgnameChar(uint8(r)) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// check if version is a valid pkgver format
+func validPkgver(version string) bool {
+	if len(version) < 1 {
+		return false
+	}
+
+	if !isAlphaNumeric(version[0]) {
+		return false
+	}
+
+	for _, r := range version[1:] {
+		if !isValidPkgverChar(uint8(r)) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isLowerAlpha reports whether c is a lowercase alpha character
+func isLowerAlpha(c uint8) bool {
+	return 'a' <= c && c <= 'z'
+}
+
+// check if c is a valid pkgname char
+func isValidPkgnameChar(c uint8) bool {
+	return isLowerAlpha(c) || isDigit(c) || c == '@' || c == '.' || c == '_' || c == '+' || c == '-'
+}
+
+// check if c is a valid pkgver char
+func isValidPkgverChar(c uint8) bool {
+	return isAlphaNumeric(c) || c == '_' || c == '+' || c == '.'
 }
