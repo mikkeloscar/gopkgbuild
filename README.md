@@ -1,6 +1,13 @@
 # goPKGBUILD
 
-A golang package for parsing Arch Linux PKGBUILDs
+A golang package for parsing [Arch Linux][archlinux] [PKGBUILDs][pkgbuilds]. I
+works by sourcing the PKGBUILD file and thus it is not safe to use with
+untrusted PKGBUILDs.
+
+## TODO
+
+- [ ] Handle split PKGBUILDs like [linux][linux-pkg]
+- [ ] Try to parse maintainer from top of PKGBUILD
 
 ## Usage
 
@@ -41,3 +48,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+[archlinux]: http://archlinux.org
+[pkgbuilds]: https://wiki.archlinux.org/index.php/PKGBUILD
+[linux-pkg]: https://projects.archlinux.org/svntogit/packages.git/tree/trunk/PKGBUILD?h=packages/linux
