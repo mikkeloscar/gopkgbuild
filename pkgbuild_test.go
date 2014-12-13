@@ -42,6 +42,27 @@ func TestValueParsing(t *testing.T) {
 	}
 }
 
+// Test parsing array value
+func TestArrayValueParsing(t *testing.T) {
+	input := "depends=([0]=\"python2\" [1]=\"git\" [2]=\"svn\")"
+	depends := []string{
+		"python2",
+		"git",
+		"svn",
+	}
+
+	pkgb, err := parse(input)
+	if err != nil {
+		t.Error("parse should not fail")
+	}
+
+	for i, d := range depends {
+		if d != pkgb.Depends[i] {
+			t.Errorf("should equal '%s', was: '%s'", d, pkgb.Depends[i])
+		}
+	}
+}
+
 // Test Newer method
 func TestNewer(t *testing.T) {
 	a := &PKGBUILD{
