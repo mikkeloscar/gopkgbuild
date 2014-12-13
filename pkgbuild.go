@@ -261,6 +261,8 @@ Loop:
 			pkgbuild.Sha512sums = parseArrayValues(lexer)
 		case itemEOF:
 			break Loop
+		case itemError:
+			return nil, fmt.Errorf(token.val)
 		}
 	}
 	return pkgbuild, nil
