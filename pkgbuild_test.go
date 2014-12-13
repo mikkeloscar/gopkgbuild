@@ -95,11 +95,11 @@ func TestNewer(t *testing.T) {
 	}
 
 	if a.Newer(d) {
-		t.Error("a (%s) should not be newer than d (%s)", a.Version(), d.Version())
+		t.Errorf("a (%s) should not be newer than d (%s)", a.Version(), d.Version())
 	}
 
 	if a.Newer(a) {
-		t.Error("a (%s) should not be newer than itself", a.Version())
+		t.Errorf("a (%s) should not be newer than itself", a.Version())
 	}
 }
 
