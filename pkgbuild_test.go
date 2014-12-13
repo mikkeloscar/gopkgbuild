@@ -149,7 +149,7 @@ func TestRandomCorePKGBUILDs(t *testing.T) {
 	}
 
 	for _, pkgb := range pkgbs {
-		path := "./pkgbuilds/PKGBUILD_" + pkgb
+		path := "./test_pkgbuilds/PKGBUILD_" + pkgb
 		_, err := ParsePKGBUILD(path)
 		if err != nil {
 			t.Errorf("PKGBUILD for %s did not parse: %s", pkgb, err.Error())
