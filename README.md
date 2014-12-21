@@ -8,6 +8,7 @@ untrusted PKGBUILDs.
 
 - [ ] Handle split PKGBUILDs like [linux][linux-pkg]
 - [ ] Try to parse maintainer from top of PKGBUILD
+- [ ] Handle multiple dependency versions
 
 ## Usage
 
