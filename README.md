@@ -9,6 +9,7 @@ untrusted PKGBUILDs.
 - [ ] Handle split PKGBUILDs like [linux][linux-pkg]
 - [ ] Try to parse maintainer from top of PKGBUILD
 - [ ] Handle multiple dependency versions
+- [ ] Update to pacman 4.2
 
 ## Usage
 
