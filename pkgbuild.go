@@ -70,9 +70,11 @@ type PKGBUILD struct {
 	Noextract    []string
 	Md5sums      []string
 	Sha1sums     []string
+	Sha224sums   []string
 	Sha256sums   []string
 	Sha384sums   []string
 	Sha512sums   []string
+	Validpgpkeys []string
 }
 
 // Newer is true if p has a higher version number than p2
@@ -253,12 +255,16 @@ Loop:
 			pkgbuild.Md5sums = parseArrayValues(lexer)
 		case itemSha1sums:
 			pkgbuild.Sha1sums = parseArrayValues(lexer)
+		case itemSha224sums:
+			pkgbuild.Sha224sums = parseArrayValues(lexer)
 		case itemSha256sums:
 			pkgbuild.Sha256sums = parseArrayValues(lexer)
 		case itemSha384sums:
 			pkgbuild.Sha384sums = parseArrayValues(lexer)
 		case itemSha512sums:
 			pkgbuild.Sha512sums = parseArrayValues(lexer)
+		case itemValidpgpkeys:
+			pkgbuild.Validpgpkeys = parseArrayValues(lexer)
 		case itemEOF:
 			break Loop
 		case itemError:

@@ -70,9 +70,11 @@ const (
 	itemNoextract    // noextract variable
 	itemMd5sums      // md5sums variable
 	itemSha1sums     // sha1sums variable
+	itemSha224sums   // sha224sums variable
 	itemSha256sums   // sha256sums variable
 	itemSha384sums   // sha384sums variable
 	itemSha512sums   // sha512sums variable
+	itemValidpgpkeys // validpgpkeys variable
 )
 
 // PKGBUILD variables
@@ -103,9 +105,11 @@ var variables = map[string]itemType{
 	"noextract":    itemNoextract,
 	"md5sums":      itemMd5sums,
 	"sha1sums":     itemSha1sums,
+	"sha224sums":   itemSha224sums,
 	"sha256sums":   itemSha256sums,
 	"sha384sums":   itemSha384sums,
 	"sha512sums":   itemSha512sums,
+	"validpgpkeys": itemValidpgpkeys,
 }
 
 const eof = -1
@@ -232,6 +236,10 @@ func lexVariable(l *lexer) stateFn {
 		case r == '=':
 			l.backup()
 			variable := l.input[l.start:l.pos]
+			// hacked way to handle cases of 'source_x86_64=()'
+			if len(variable) >= 6 && variable[0:6] == "source" {
+				variable = "source"
+			}
 			if _, ok := variables[variable]; ok {
 				l.emit(variables[variable])
 				l.next()

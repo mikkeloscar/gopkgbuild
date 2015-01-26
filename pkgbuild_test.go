@@ -177,3 +177,17 @@ func TestRandomCorePKGBUILDs(t *testing.T) {
 		}
 	}
 }
+
+// Test parsing source_%src%
+func TestArchSourceParsing(t *testing.T) {
+	input := "source_x86_64=([0]=\"test-x86_64.tar.gz\")"
+
+	pkgb, err := parse(input)
+	if err != nil {
+		t.Error("parse should not fail")
+	}
+
+	if pkgb.Source[0] != "test-x86_64.tar.gz" {
+		t.Errorf("should equal 'value1', was: %#v", pkgb.Pkgdesc)
+	}
+}
