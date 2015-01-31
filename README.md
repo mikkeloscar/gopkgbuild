@@ -1,6 +1,6 @@
 # goPKGBUILD
 
-A golang package for parsing [Arch Linux][archlinux] [PKGBUILDs][pkgbuilds]. I
+A golang package for parsing [Arch Linux][archlinux] [PKGBUILDs][pkgbuilds]. It
 works by sourcing the PKGBUILD file and thus it is not safe to use with
 untrusted PKGBUILDs.
 
