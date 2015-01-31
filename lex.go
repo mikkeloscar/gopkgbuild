@@ -236,10 +236,15 @@ func lexVariable(l *lexer) stateFn {
 		case r == '=':
 			l.backup()
 			variable := l.input[l.start:l.pos]
-			// hacked way to handle cases of 'source_x86_64=()'
-			if len(variable) >= 6 && variable[0:6] == "source" {
-				variable = "source"
+
+			// strip arch from source_arch like constructs
+			witharch := strings.SplitN(variable, "_", 2)
+			if len(witharch) == 2 {
+				if _, ok := archs[witharch[1]]; ok {
+					variable = witharch[0]
+				}
 			}
+
 			if _, ok := variables[variable]; ok {
 				l.emit(variables[variable])
 				l.next()

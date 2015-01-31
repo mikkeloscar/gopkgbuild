@@ -178,7 +178,7 @@ func TestRandomCorePKGBUILDs(t *testing.T) {
 	}
 }
 
-// Test parsing source_%src%
+// Test parsing source_%arch%
 func TestArchSourceParsing(t *testing.T) {
 	input := "source_x86_64=([0]=\"test-x86_64.tar.gz\")"
 
@@ -188,6 +188,20 @@ func TestArchSourceParsing(t *testing.T) {
 	}
 
 	if pkgb.Source[0] != "test-x86_64.tar.gz" {
-		t.Errorf("should equal 'value1', was: %#v", pkgb.Pkgdesc)
+		t.Errorf("should equal 'test-x86_64.tar.gz', was: %#v", pkgb.Source[0])
+	}
+}
+
+// Test parsing depends_%arch%
+func TestArchDependsParsing(t *testing.T) {
+	input := "depends_i686=([0]=\"foo\")"
+
+	pkgb, err := parse(input)
+	if err != nil {
+		t.Error("parse should not fail")
+	}
+
+	if pkgb.Depends[0] != "foo" {
+		t.Errorf("should equal 'test-x86_64.tar.gz', was: %#v", pkgb.Depends[0])
 	}
 }
