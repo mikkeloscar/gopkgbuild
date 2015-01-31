@@ -19,11 +19,11 @@ func TestVersionParsing(t *testing.T) {
 	for version, valid := range versions {
 		_, err := parseVersion(version)
 		if err != nil && valid {
-			t.Errorf("Version string '%s' should pass", version)
+			t.Errorf("Version string '%s' should parse", version)
 		}
 
 		if err == nil && !valid {
-			t.Errorf("Version string '%s' should not pass", version)
+			t.Errorf("Version string '%s' should not parse", version)
 		}
 	}
 }
