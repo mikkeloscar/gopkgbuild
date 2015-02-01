@@ -28,41 +28,6 @@ func TestVersionParsing(t *testing.T) {
 	}
 }
 
-// Test parsing array value as value
-func TestValueParsing(t *testing.T) {
-	input := "pkgdesc=([0]=\"value1\" [1]=\"value2\")"
-
-	pkgb, err := parse(input)
-	if err != nil {
-		t.Error("parse should not fail")
-	}
-
-	if pkgb.Pkgdesc != "value1" {
-		t.Errorf("should equal 'value1', was: %#v", pkgb.Pkgdesc)
-	}
-}
-
-// Test parsing array value
-func TestArrayValueParsing(t *testing.T) {
-	input := "depends=([0]=\"python2\" [1]=\"git\" [2]=\"svn\")"
-	depends := []string{
-		"python2",
-		"git",
-		"svn",
-	}
-
-	pkgb, err := parse(input)
-	if err != nil {
-		t.Error("parse should not fail")
-	}
-
-	for i, d := range depends {
-		if d != pkgb.Depends[i] {
-			t.Errorf("should equal '%s', was: '%s'", d, pkgb.Depends[i])
-		}
-	}
-}
-
 // Test Newer method
 func TestNewer(t *testing.T) {
 	a := &PKGBUILD{
@@ -167,6 +132,7 @@ func TestRandomCorePKGBUILDs(t *testing.T) {
 		"grub",
 		"glibc",
 		"systemd",
+		"linux",
 	}
 
 	for _, pkgb := range pkgbs {
@@ -175,33 +141,5 @@ func TestRandomCorePKGBUILDs(t *testing.T) {
 		if err != nil {
 			t.Errorf("PKGBUILD for %s did not parse: %s", pkgb, err.Error())
 		}
-	}
-}
-
-// Test parsing source_%arch%
-func TestArchSourceParsing(t *testing.T) {
-	input := "source_x86_64=([0]=\"test-x86_64.tar.gz\")"
-
-	pkgb, err := parse(input)
-	if err != nil {
-		t.Error("parse should not fail")
-	}
-
-	if pkgb.Source[0] != "test-x86_64.tar.gz" {
-		t.Errorf("should equal 'test-x86_64.tar.gz', was: %#v", pkgb.Source[0])
-	}
-}
-
-// Test parsing depends_%arch%
-func TestArchDependsParsing(t *testing.T) {
-	input := "depends_i686=([0]=\"foo\")"
-
-	pkgb, err := parse(input)
-	if err != nil {
-		t.Error("parse should not fail")
-	}
-
-	if pkgb.Depends[0] != "foo" {
-		t.Errorf("should equal 'test-x86_64.tar.gz', was: %#v", pkgb.Depends[0])
 	}
 }

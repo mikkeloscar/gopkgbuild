@@ -1,14 +1,19 @@
 # goPKGBUILD
 
 A golang package for parsing [Arch Linux][archlinux] [PKGBUILDs][pkgbuilds]. It
-works by sourcing the PKGBUILD file and thus it is not safe to use with
-untrusted PKGBUILDs.
+uses `mksrcinfo` to create a `.SRCINFO` formatted string which is then parsed
+into a slice of PKGBUILD structs.
+
+## Dependencies
+
+* [pkgbuild-introspection][pkg-introspec] (specifically `mksrcinfo`)
 
 ## TODO
 
-- [ ] Handle split PKGBUILDs like [linux][linux-pkg]
+- [x] Handle split PKGBUILDs like [linux][linux-pkg]
 - [ ] Try to parse maintainer from top of PKGBUILD
 - [ ] Handle multiple dependency versions
+- [ ] Add support for reading a `.SRCINFO` file directly
 - [x] Update to pacman 4.2
 
 ## Usage
@@ -36,7 +41,7 @@ func main() {
 
 ## LICENSE
 
-Copyright (C) 2014  Mikkel Oscar Lyderik Larsen
+Copyright (C) 2015  Mikkel Oscar Lyderik Larsen
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -55,3 +60,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 [archlinux]: http://archlinux.org
 [pkgbuilds]: https://wiki.archlinux.org/index.php/PKGBUILD
 [linux-pkg]: https://projects.archlinux.org/svntogit/packages.git/tree/trunk/PKGBUILD?h=packages/linux
+[pkg-introspec]: https://github.com/falconindy/pkgbuild-introspection

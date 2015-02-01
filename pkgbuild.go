@@ -1,12 +1,10 @@
 package pkgbuild
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 )
 
 // Arch is a system architecture
@@ -117,7 +115,7 @@ func (p *PKGBUILD) Version() string {
 }
 
 // MustParsePKGBUILD must parse the PKGBUILD or it will panic
-func MustParsePKGBUILD(path string) *PKGBUILD {
+func MustParsePKGBUILD(path string) []*PKGBUILD {
 	pkgbuild, err := ParsePKGBUILD(path)
 	if err != nil {
 		panic(err)
@@ -128,7 +126,7 @@ func MustParsePKGBUILD(path string) *PKGBUILD {
 // ParsePKGBUILD parses a PKGBUILD given by path
 // note that this operation is unsafe and should only be used on trusted
 // PKGBUILDs or within some kind of jail, e.g. a VM, container or chroot
-func ParsePKGBUILD(path string) (*PKGBUILD, error) {
+func ParsePKGBUILD(path string) ([]*PKGBUILD, error) {
 	// TODO parse maintainer if possible (read first x bytes of the file)
 	// check for valid path
 	if _, err := os.Stat(path); err != nil {
@@ -138,8 +136,8 @@ func ParsePKGBUILD(path string) (*PKGBUILD, error) {
 		return nil, err
 	}
 
-	source := fmt.Sprintf("source %s && set", path)
-	out, err := exec.Command("bash", "-c", source).Output()
+	// depend on pkgbuild-introspection (mksrcinfo)
+	out, err := exec.Command("/usr/bin/mksrcinfo", "-o", "/dev/stdout", path).Output()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
 			return nil, fmt.Errorf("unable to parse PKGBUILD: %s", path)
@@ -151,162 +149,182 @@ func ParsePKGBUILD(path string) (*PKGBUILD, error) {
 }
 
 // parse a PKGBUILD and check that the required fields has a non-empty value
-func parsePKGBUILD(input string) (*PKGBUILD, error) {
-	pkgbuild, err := parse(input)
+func parsePKGBUILD(input string) ([]*PKGBUILD, error) {
+	pkgbuilds, err := parse(input)
 	if err != nil {
 		return nil, err
 	}
 
-	if !validPkgname(pkgbuild.Pkgname) {
-		return nil, fmt.Errorf("invalid pkgname '%s'", pkgbuild.Pkgname)
+	for _, pkgb := range pkgbuilds {
+		if !validPkgname(pkgb.Pkgname) {
+			return nil, fmt.Errorf("invalid pkgname: %s", pkgb.Pkgname)
+		}
+
+		if !validPkgver(string(pkgb.Pkgver)) {
+			return nil, fmt.Errorf("invalid pkgver: %s", pkgb.Pkgver)
+		}
+
+		if len(pkgb.Arch) == 0 {
+			return nil, fmt.Errorf("Arch missing")
+		}
 	}
 
-	if !validPkgver(string(pkgbuild.Pkgver)) {
-		return nil, fmt.Errorf("invalid pkgver '%s'", pkgbuild.Pkgver)
-	}
-
-	if len(pkgbuild.Arch) == 0 {
-		return nil, fmt.Errorf("Arch missing")
-	}
-
-	return pkgbuild, nil
+	return pkgbuilds, nil
 }
 
-// parses a sourced PKGBUILD
-func parse(input string) (*PKGBUILD, error) {
-	pkgbuild := &PKGBUILD{Epoch: 0}
-	lexer := lex(input)
-Loop:
+func parsePackage(l *lexer, pkgbuild *PKGBUILD) (*PKGBUILD, error) {
+	var next item
 	for {
-		token := lexer.nextItem()
+		token := l.nextItem()
 		switch token.typ {
-		case itemPkgname:
-			pkgbuild.Pkgname = parseValue(lexer)
 		case itemPkgver:
-			next := lexer.nextItem()
+			next = l.nextItem()
 			version, err := parseVersion(next.val)
 			if err != nil {
 				return nil, err
 			}
 			pkgbuild.Pkgver = version
 		case itemPkgrel:
-			next := lexer.nextItem()
+			next = l.nextItem()
 			rel, err := strconv.ParseInt(next.val, 10, 0)
 			if err != nil {
 				return nil, err
 			}
 			pkgbuild.Pkgrel = int(rel)
 		case itemPkgdir:
-			pkgbuild.Pkgdir = parseValue(lexer)
+			next = l.nextItem()
+			pkgbuild.Pkgdir = next.val
 		case itemEpoch:
-			next := lexer.nextItem()
+			next = l.nextItem()
 			epoch, err := strconv.ParseInt(next.val, 10, 0)
 			if err != nil {
 				return nil, err
 			}
 
 			if epoch < 0 {
-				return nil, fmt.Errorf("invalid epoch %d", epoch)
+				return nil, fmt.Errorf("invalid epoch: %d", epoch)
 			}
 			pkgbuild.Epoch = int(epoch)
-		case itemPkgbase:
-			pkgbuild.Pkgbase = parseValue(lexer)
 		case itemPkgdesc:
-			pkgbuild.Pkgdesc = parseValue(lexer)
+			next = l.nextItem()
+			pkgbuild.Pkgdesc = next.val
 		case itemArch:
-			val, err := parseArchs(lexer)
-			if err != nil {
-				return nil, err
+			next = l.nextItem()
+			if arch, ok := archs[next.val]; ok {
+				pkgbuild.Arch = append(pkgbuild.Arch, arch)
+			} else {
+				return nil, fmt.Errorf("invalid Arch: %s", next.val)
 			}
-			pkgbuild.Arch = val
 		case itemURL:
-			pkgbuild.URL = parseValue(lexer)
+			next = l.nextItem()
+			pkgbuild.URL = next.val
 		case itemLicense:
-			pkgbuild.License = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.License = append(pkgbuild.License, next.val)
 		case itemGroups:
-			pkgbuild.Groups = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Groups = append(pkgbuild.Groups, next.val)
 		case itemDepends:
-			pkgbuild.Depends = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Depends = append(pkgbuild.Depends, next.val)
 		case itemOptdepends:
-			pkgbuild.Optdepends = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Optdepends = append(pkgbuild.Optdepends, next.val)
 		case itemMakedepends:
-			pkgbuild.Makedepends = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Makedepends = append(pkgbuild.Makedepends, next.val)
 		case itemCheckdepends:
-			pkgbuild.Checkdepends = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Checkdepends = append(pkgbuild.Checkdepends, next.val)
 		case itemProvides:
-			pkgbuild.Provides = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Provides = append(pkgbuild.Provides, next.val)
 		case itemConflicts:
-			pkgbuild.Conflicts = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Conflicts = append(pkgbuild.Conflicts, next.val)
 		case itemReplaces:
-			pkgbuild.Replaces = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Replaces = append(pkgbuild.Replaces, next.val)
 		case itemBackup:
-			pkgbuild.Backup = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Backup = append(pkgbuild.Backup, next.val)
 		case itemOptions:
-			pkgbuild.Options = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Options = append(pkgbuild.Options, next.val)
 		case itemInstall:
-			pkgbuild.Install = parseValue(lexer)
+			next = l.nextItem()
+			pkgbuild.Install = next.val
 		case itemChangelog:
-			pkgbuild.Changelog = parseValue(lexer)
+			next = l.nextItem()
+			pkgbuild.Changelog = next.val
 		case itemSource:
-			pkgbuild.Source = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Source = append(pkgbuild.Source, next.val)
 		case itemNoextract:
-			pkgbuild.Noextract = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Noextract = append(pkgbuild.Noextract, next.val)
 		case itemMd5sums:
-			pkgbuild.Md5sums = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Md5sums = append(pkgbuild.Md5sums, next.val)
 		case itemSha1sums:
-			pkgbuild.Sha1sums = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Sha1sums = append(pkgbuild.Sha1sums, next.val)
 		case itemSha224sums:
-			pkgbuild.Sha224sums = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Sha224sums = append(pkgbuild.Sha224sums, next.val)
 		case itemSha256sums:
-			pkgbuild.Sha256sums = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Sha256sums = append(pkgbuild.Sha256sums, next.val)
 		case itemSha384sums:
-			pkgbuild.Sha384sums = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Sha384sums = append(pkgbuild.Sha384sums, next.val)
 		case itemSha512sums:
-			pkgbuild.Sha512sums = parseArrayValues(lexer)
+			next = l.nextItem()
+			pkgbuild.Sha512sums = append(pkgbuild.Sha512sums, next.val)
 		case itemValidpgpkeys:
-			pkgbuild.Validpgpkeys = parseArrayValues(lexer)
-		case itemEOF:
-			break Loop
+			next = l.nextItem()
+			pkgbuild.Validpgpkeys = append(pkgbuild.Validpgpkeys, next.val)
+		case itemEndSplit:
+			return pkgbuild, nil
 		case itemError:
 			return nil, fmt.Errorf(token.val)
 		}
 	}
-	return pkgbuild, nil
 }
 
-// parse a value to a correctly formatted string
-func parseValue(l *lexer) string {
-	switch token := l.nextItem(); token.typ {
-	case itemValue:
-		return strings.Replace(token.val, "'\\''", "'", -1)
-	case itemArrayValue:
-		// discard all the next array items of the current array
-		for l.nextItem().typ != itemArrayEnd {
-		}
-		return parseArrayValue(token.val)
-	default:
-		return ""
-	}
-}
+// parses a sourced PKGBUILD
+func parse(input string) ([]*PKGBUILD, error) {
+	var pkgbase *PKGBUILD
+	var pkgbuild *PKGBUILD
+	var err error
 
-// parse array values into a string array
-func parseArrayValues(l *lexer) []string {
-	array := []string{}
+	pkgbuilds := []*PKGBUILD{}
+	lexer := lex(input)
 Loop:
 	for {
-		switch next := l.nextItem(); next.typ {
-		case itemArrayValue:
-			array = append(array, parseArrayValue(next.val))
-		case itemArrayEnd:
+		token := lexer.nextItem()
+		switch token.typ {
+		case itemPkgbase:
+			pkgbase = &PKGBUILD{Epoch: 0, Pkgbase: token.val}
+			pkgbase, err = parsePackage(lexer, pkgbase)
+			if err != nil {
+				return nil, err
+			}
+		case itemPkgname:
+			pkgb := *pkgbase
+			pkgb.Pkgname = token.val
+			pkgbuild, err = parsePackage(lexer, &pkgb)
+			if err != nil {
+				return nil, err
+			}
+			pkgbuilds = append(pkgbuilds, pkgbuild)
+		case itemEOF:
 			break Loop
+		default:
+			fmt.Println(token.val)
 		}
 	}
-	return array
-}
-
-// parse a bash array value
-func parseArrayValue(v string) string {
-	return strings.Replace(v, "\\\"", "\"", -1)
+	return pkgbuilds, nil
 }
 
 // parse and validate a version string
@@ -315,26 +333,7 @@ func parseVersion(s string) (Version, error) {
 		return Version(s), nil
 	}
 
-	return "", fmt.Errorf("invalid version string '%s'", s)
-}
-
-// parse archs into an Arch array
-func parseArchs(l *lexer) ([]Arch, error) {
-	array := []Arch{}
-Loop:
-	for {
-		switch next := l.nextItem(); next.typ {
-		case itemArrayValue:
-			if arch, ok := archs[next.val]; ok {
-				array = append(array, arch)
-			} else {
-				return nil, errors.New("invalid Arch: " + next.val)
-			}
-		case itemArrayEnd:
-			break Loop
-		}
-	}
-	return array, nil
+	return "", fmt.Errorf("invalid version string: %s", s)
 }
 
 // check if name is a valid pkgname format

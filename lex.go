@@ -41,8 +41,7 @@ const (
 	itemEOF
 	itemVariable
 	itemValue
-	itemArrayValue
-	itemArrayEnd
+	itemEndSplit
 	// PKGBUILD variables
 	itemPkgname      // pkgname variable
 	itemPkgver       // pkgver variable
@@ -163,29 +162,6 @@ func (l *lexer) ignore() {
 	l.start = l.pos
 }
 
-// accept consumes the next rune if it's from the valid set
-func (l *lexer) accept(valid string) bool {
-	if strings.IndexRune(valid, l.next()) >= 0 {
-		return true
-	}
-	l.backup()
-	return false
-}
-
-//acceptRun consumes a run of runes from the valid set
-func (l *lexer) acceptRun(valid string) {
-	for strings.IndexRune(valid, l.next()) >= 0 {
-	}
-	l.backup()
-}
-
-// lineNumber reports which line we're on, based on the position of
-// the previous item returned by nextItem. Doing it this way
-// means we don't have to worry about peek double counting.
-func (l *lexer) lineNumber() int {
-	return 1 + strings.Count(l.input[:l.lastPos], "\n")
-}
-
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
@@ -216,15 +192,25 @@ func (l *lexer) run() {
 }
 
 func lexEnv(l *lexer) stateFn {
-	switch r := l.next(); {
-	case r == eof:
-		l.emit(itemEOF)
-		return nil
-	case isAlphaNumericUnderscore(r):
-		l.backup()
-		return lexVariable
-	default:
-		return lexNewline
+	for {
+		switch r := l.next(); {
+		case r == eof:
+			l.emit(itemEOF)
+			return nil
+		case isAlphaNumericUnderscore(r):
+			return lexVariable
+		case r == '\n':
+			if l.input[l.start:l.pos] == "\n\n" {
+				l.ignore()
+				l.emit(itemEndSplit)
+			}
+		case r == '\t':
+			l.ignore()
+		default:
+			// TODO error if we hit this
+			// maybe use it to handle comments in .SRCINFO
+			return l.errorf("nothing to parse")
+		}
 	}
 }
 
@@ -233,7 +219,7 @@ func lexVariable(l *lexer) stateFn {
 		switch r := l.next(); {
 		case isAlphaNumericUnderscore(r):
 			// absorb
-		case r == '=':
+		case r == ' ' && l.peek() == '=':
 			l.backup()
 			variable := l.input[l.start:l.pos]
 
@@ -247,102 +233,28 @@ func lexVariable(l *lexer) stateFn {
 
 			if _, ok := variables[variable]; ok {
 				l.emit(variables[variable])
+				// TODO to cut off ' = '
+				l.next()
+				l.next()
 				l.next()
 				l.ignore()
-				return lexValueType
+				return lexValue
 			}
-			return lexNewline
-		case r == ' ' || r == '(' || r == '-':
-			// found a function, skip it
-			return lexNewline
+			return l.errorf("invalid variable: %s", variable)
 		default:
-			return l.errorf("invalid valriable or function")
+			pattern := l.input[l.start:l.pos]
+			return l.errorf("invalid pattern: %s", pattern)
 		}
 	}
-}
-
-func lexValueType(l *lexer) stateFn {
-	for {
-		switch r := l.next(); {
-		case r == '(':
-			return lexArray
-		default:
-			if r == '\'' {
-				l.ignore()
-			} else {
-				l.backup()
-			}
-			return lexValue
-		}
-	}
-
 }
 
 func lexValue(l *lexer) stateFn {
 	for {
 		switch l.next() {
-		case eof, '\n':
+		case '\n':
 			l.backup()
 			l.emit(itemValue)
-			return lexNewline
-		case '\'':
-			if l.peek() == '\n' {
-				l.backup()
-				l.emit(itemValue)
-				return lexNewline
-			}
-		default:
-			// absorb
-		}
-	}
-}
-
-func lexArrayValue(l *lexer) stateFn {
-	for {
-		switch l.next() {
-		case '"':
-			if l.input[l.pos-2] != '\\' { // TODO -2 seems like magic
-				l.backup()
-				l.emit(itemArrayValue)
-				l.next()
-				return lexArray
-			}
-		default:
-			// absorb
-		}
-	}
-}
-
-func lexArray(l *lexer) stateFn {
-	if l.peek() == ' ' {
-		l.next()
-	}
-	for {
-		switch r := l.next(); {
-		case r == '"':
-			l.ignore()
-			return lexArrayValue
-		case r == ')':
-			l.emit(itemArrayEnd)
-			l.ignore()
-			return lexNewline
-		default:
-			l.ignore()
-		}
-	}
-}
-
-func lexNewline(l *lexer) stateFn {
-	for {
-		switch l.next() {
-		case '\n':
-			l.ignore()
 			return lexEnv
-		case eof:
-			l.backup()
-			return lexEnv
-		default:
-			l.ignore() // ignore until newline
 		}
 	}
 }
