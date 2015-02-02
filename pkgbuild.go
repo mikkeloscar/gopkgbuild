@@ -297,6 +297,7 @@ func parse(input string) ([]*PKGBUILD, error) {
 	var pkgbase *PKGBUILD
 	var pkgbuild *PKGBUILD
 	var err error
+	var next item
 
 	pkgbuilds := []*PKGBUILD{}
 	lexer := lex(input)
@@ -305,14 +306,16 @@ Loop:
 		token := lexer.nextItem()
 		switch token.typ {
 		case itemPkgbase:
-			pkgbase = &PKGBUILD{Epoch: 0, Pkgbase: token.val}
+			next = lexer.nextItem()
+			pkgbase = &PKGBUILD{Epoch: 0, Pkgbase: next.val}
 			pkgbase, err = parsePackage(lexer, pkgbase)
 			if err != nil {
 				return nil, err
 			}
 		case itemPkgname:
+			next = lexer.nextItem()
 			pkgb := *pkgbase
-			pkgb.Pkgname = token.val
+			pkgb.Pkgname = next.val
 			pkgbuild, err = parsePackage(lexer, &pkgb)
 			if err != nil {
 				return nil, err
