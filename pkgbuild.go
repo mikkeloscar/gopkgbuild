@@ -112,10 +112,14 @@ func (p *PKGBUILD) Older(p2 *PKGBUILD) bool {
 
 // Version returns the full version of the PKGBUILD (including epoch and rel)
 func (p *PKGBUILD) Version() string {
-	return fmt.Sprintf("%d:%s-%d", p.Epoch, p.Pkgver, p.Pkgrel)
+	if p.Epoch > 0 {
+		return fmt.Sprintf("%d:%s-%d", p.Epoch, p.Pkgver, p.Pkgrel)
+	}
+
+	return fmt.Sprintf("%s-%d", p.Pkgver, p.Pkgrel)
 }
 
-// MustParsePKGBUILD must parse the PKGBUILD or it will panic
+// MustParsePKGBUILD must parse the PKGBUILD given by path or it will panic
 func MustParsePKGBUILD(path string) []*PKGBUILD {
 	pkgbuild, err := ParsePKGBUILD(path)
 	if err != nil {
@@ -124,8 +128,8 @@ func MustParsePKGBUILD(path string) []*PKGBUILD {
 	return pkgbuild
 }
 
-// ParsePKGBUILD parses a PKGBUILD given by path
-// note that this operation is unsafe and should only be used on trusted
+// ParsePKGBUILD parses a PKGBUILD given by path.
+// Note that this operation is unsafe and should only be used on trusted
 // PKGBUILDs or within some kind of jail, e.g. a VM, container or chroot
 func ParsePKGBUILD(path string) ([]*PKGBUILD, error) {
 	// TODO parse maintainer if possible (read first x bytes of the file)
@@ -149,7 +153,7 @@ func ParsePKGBUILD(path string) ([]*PKGBUILD, error) {
 	return parsePKGBUILD(string(out))
 }
 
-// MustParseSRCINFO must parse the .SRCINFO or it will panic
+// MustParseSRCINFO must parse the .SRCINFO given by path or it will panic
 func MustParseSRCINFO(path string) []*PKGBUILD {
 	pkgbuild, err := ParseSRCINFO(path)
 	if err != nil {
@@ -158,7 +162,7 @@ func MustParseSRCINFO(path string) []*PKGBUILD {
 	return pkgbuild
 }
 
-// ParseSRCINFO parses .SRCINFO file given by path
+// ParseSRCINFO parses .SRCINFO file given by path.
 // This is a safe alternative to ParsePKGBUILD given that a .SRCINFO file is
 // available
 func ParseSRCINFO(path string) ([]*PKGBUILD, error) {

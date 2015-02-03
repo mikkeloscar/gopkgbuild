@@ -116,10 +116,22 @@ func TestVersionMethod(t *testing.T) {
 		Pkgrel: 1,
 	}
 
-	version := "0:1.0-1"
+	version := "1.0-1"
 
 	if a.Version() != version {
 		t.Errorf("a (%s) should be %s", a.Version(), version)
+	}
+
+	b := &PKGBUILD{
+		Epoch:  4,
+		Pkgver: Version("1.0"),
+		Pkgrel: 1,
+	}
+
+	version = "4:1.0-1"
+
+	if b.Version() != version {
+		t.Errorf("a (%s) should be %s", b.Version(), version)
 	}
 }
 
