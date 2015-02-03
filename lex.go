@@ -210,7 +210,7 @@ func lexEnv(l *lexer) stateFn {
 		case r == '#':
 			return lexComment
 		default:
-			l.errorf("unable to parse character: %s", r)
+			l.errorf("unable to parse character: %c", r)
 		}
 	}
 }
