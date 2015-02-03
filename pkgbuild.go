@@ -2,6 +2,7 @@ package pkgbuild
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -146,6 +147,27 @@ func ParsePKGBUILD(path string) ([]*PKGBUILD, error) {
 	}
 
 	return parsePKGBUILD(string(out))
+}
+
+// MustParseSRCINFO must parse the .SRCINFO or it will panic
+func MustParseSRCINFO(path string) []*PKGBUILD {
+	pkgbuild, err := ParseSRCINFO(path)
+	if err != nil {
+		panic(err)
+	}
+	return pkgbuild
+}
+
+// ParseSRCINFO parses .SRCINFO file given by path
+// This is a safe alternative to ParsePKGBUILD given that a .SRCINFO file is
+// available
+func ParseSRCINFO(path string) ([]*PKGBUILD, error) {
+	f, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file: %s, %s", path, err.Error())
+	}
+
+	return parsePKGBUILD(string(f))
 }
 
 // parse a PKGBUILD and check that the required fields has a non-empty value
@@ -324,7 +346,7 @@ Loop:
 		case itemEOF:
 			break Loop
 		default:
-			fmt.Println(token.val)
+			return nil, fmt.Errorf(token.val)
 		}
 	}
 	return pkgbuilds, nil

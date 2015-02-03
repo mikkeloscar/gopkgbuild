@@ -149,3 +149,30 @@ func TestRandomCorePKGBUILDs(t *testing.T) {
 		}
 	}
 }
+
+// Test random SRCINFO files based on pkgbuilds from Arch core
+func TestRandomCoreSRCINFOs(t *testing.T) {
+	srcinfos := []string{
+		"sudo",
+		"pacman",
+		"openssh",
+		"grub",
+		"glibc",
+		"systemd",
+		"linux",
+	}
+
+	for _, srcinfo := range srcinfos {
+		path := "./test_pkgbuilds/SRCINFO_" + srcinfo
+		pkgs, err := ParseSRCINFO(path)
+		if err != nil {
+			t.Errorf("PKGBUILD for %s did not parse: %s", srcinfo, err.Error())
+		}
+
+		for _, pkg := range pkgs {
+			if pkg.Pkgbase != srcinfo {
+				t.Errorf("pkgbase for %s should be %s", srcinfo, pkg.Pkgbase)
+			}
+		}
+	}
+}

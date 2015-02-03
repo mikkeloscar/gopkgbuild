@@ -192,8 +192,9 @@ func (l *lexer) run() {
 }
 
 func lexEnv(l *lexer) stateFn {
+	var r rune
 	for {
-		switch r := l.next(); {
+		switch r = l.next(); {
 		case r == eof:
 			l.emit(itemEOF)
 			return nil
@@ -206,10 +207,23 @@ func lexEnv(l *lexer) stateFn {
 			}
 		case r == '\t':
 			l.ignore()
+		case r == '#':
+			return lexComment
 		default:
-			// TODO error if we hit this
-			// maybe use it to handle comments in .SRCINFO
-			return l.errorf("nothing to parse")
+			l.errorf("unable to parse character: %s", r)
+		}
+	}
+}
+
+func lexComment(l *lexer) stateFn {
+	for {
+		switch l.next() {
+		case '\n':
+			l.ignore()
+			return lexEnv
+		case eof:
+			l.emit(itemEOF)
+			return nil
 		}
 	}
 }
