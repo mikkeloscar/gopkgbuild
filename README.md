@@ -18,6 +18,8 @@ into a slice of PKGBUILD structs.
 
 ## Usage
 
+[Godoc][godoc]
+
 Example usage
 
 ```go
@@ -64,3 +66,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 [pkgbuilds]: https://wiki.archlinux.org/index.php/PKGBUILD
 [linux-pkg]: https://projects.archlinux.org/svntogit/packages.git/tree/trunk/PKGBUILD?h=packages/linux
 [pkg-introspec]: https://github.com/falconindy/pkgbuild-introspection
+[godoc]: https://godoc.org/github.com/mikkeloscar/gopkgbuild
