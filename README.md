@@ -30,12 +30,15 @@ import (
 )
 
 func main() {
-    pkgb, err := ParsePKGBUILD("/path/to/PKGBUILD")
+    pkgbs, err := ParsePKGBUILD("/path/to/PKGBUILD")
     if err != nil {
         fmt.Println(err)
     }
 
-    fmt.Printf("Package name: %s", pkgb.Pkgname)
+    for _, pkgb := range pkgbs {
+        fmt.Printf("Package name: %s", pkgb.Pkgname)
+
+    }
 }
 ```
 
