@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/mikkeloscar/gopkgbuild?status.svg)](https://godoc.org/github.com/mikkeloscar/gopkgbuild)
+
 # goPKGBUILD
 
 A golang package for parsing [Arch Linux][archlinux] [PKGBUILDs][pkgbuilds]. It
