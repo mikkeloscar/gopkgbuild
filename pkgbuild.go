@@ -43,7 +43,7 @@ var archs = map[string]Arch{
 //
 // parsing a PKGBUILD file without these fields will fail
 type PKGBUILD struct {
-	Pkgname      string  // required
+	Pkgnames     []string
 	Pkgver       Version // required
 	Pkgrel       int     // required
 	Pkgdir       string
@@ -120,7 +120,7 @@ func (p *PKGBUILD) Version() string {
 }
 
 // MustParsePKGBUILD must parse the PKGBUILD given by path or it will panic
-func MustParsePKGBUILD(path string) []*PKGBUILD {
+func MustParsePKGBUILD(path string) *PKGBUILD {
 	pkgbuild, err := ParsePKGBUILD(path)
 	if err != nil {
 		panic(err)
@@ -131,7 +131,7 @@ func MustParsePKGBUILD(path string) []*PKGBUILD {
 // ParsePKGBUILD parses a PKGBUILD given by path.
 // Note that this operation is unsafe and should only be used on trusted
 // PKGBUILDs or within some kind of jail, e.g. a VM, container or chroot
-func ParsePKGBUILD(path string) ([]*PKGBUILD, error) {
+func ParsePKGBUILD(path string) (*PKGBUILD, error) {
 	// TODO parse maintainer if possible (read first x bytes of the file)
 	// check for valid path
 	if _, err := os.Stat(path); err != nil {
@@ -154,7 +154,7 @@ func ParsePKGBUILD(path string) ([]*PKGBUILD, error) {
 }
 
 // MustParseSRCINFO must parse the .SRCINFO given by path or it will panic
-func MustParseSRCINFO(path string) []*PKGBUILD {
+func MustParseSRCINFO(path string) *PKGBUILD {
 	pkgbuild, err := ParseSRCINFO(path)
 	if err != nil {
 		panic(err)
@@ -165,7 +165,7 @@ func MustParseSRCINFO(path string) []*PKGBUILD {
 // ParseSRCINFO parses .SRCINFO file given by path.
 // This is a safe alternative to ParsePKGBUILD given that a .SRCINFO file is
 // available
-func ParseSRCINFO(path string) ([]*PKGBUILD, error) {
+func ParseSRCINFO(path string) (*PKGBUILD, error) {
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file: %s, %s", path, err.Error())
@@ -175,53 +175,68 @@ func ParseSRCINFO(path string) ([]*PKGBUILD, error) {
 }
 
 // parse a PKGBUILD and check that the required fields has a non-empty value
-func parsePKGBUILD(input string) ([]*PKGBUILD, error) {
-	pkgbuilds, err := parse(input)
+func parsePKGBUILD(input string) (*PKGBUILD, error) {
+	pkgb, err := parse(input)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, pkgb := range pkgbuilds {
-		if !validPkgname(pkgb.Pkgname) {
-			return nil, fmt.Errorf("invalid pkgname: %s", pkgb.Pkgname)
-		}
+	if !validPkgver(string(pkgb.Pkgver)) {
+		return nil, fmt.Errorf("invalid pkgver: %s", pkgb.Pkgver)
+	}
 
-		if !validPkgver(string(pkgb.Pkgver)) {
-			return nil, fmt.Errorf("invalid pkgver: %s", pkgb.Pkgver)
-		}
+	if len(pkgb.Arch) == 0 {
+		return nil, fmt.Errorf("Arch missing")
+	}
 
-		if len(pkgb.Arch) == 0 {
-			return nil, fmt.Errorf("Arch missing")
+	if len(pkgb.Pkgnames) == 0 {
+		return nil, fmt.Errorf("missing pkgname")
+	}
+
+	for _, name := range pkgb.Pkgnames {
+		if !validPkgname(name) {
+			return nil, fmt.Errorf("invalid pkgname: %s", name)
 		}
 	}
 
-	return pkgbuilds, nil
+	return pkgb, nil
 }
 
-func parsePackage(l *lexer, pkgbuild *PKGBUILD) (*PKGBUILD, error) {
+// parses a SRCINFO formatted PKGBUILD
+func parse(input string) (*PKGBUILD, error) {
+	var pkgbuild *PKGBUILD
 	var next item
+
+	lexer := lex(input)
+Loop:
 	for {
-		token := l.nextItem()
+		token := lexer.nextItem()
 		switch token.typ {
+		case itemPkgbase:
+			next = lexer.nextItem()
+			pkgbuild = &PKGBUILD{Epoch: 0, Pkgbase: next.val}
+		case itemPkgname:
+			next = lexer.nextItem()
+			pkgbuild.Pkgnames = append(pkgbuild.Pkgnames, next.val)
 		case itemPkgver:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			version, err := parseVersion(next.val)
 			if err != nil {
 				return nil, err
 			}
 			pkgbuild.Pkgver = version
 		case itemPkgrel:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			rel, err := strconv.ParseInt(next.val, 10, 0)
 			if err != nil {
 				return nil, err
 			}
 			pkgbuild.Pkgrel = int(rel)
 		case itemPkgdir:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Pkgdir = next.val
 		case itemEpoch:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			epoch, err := strconv.ParseInt(next.val, 10, 0)
 			if err != nil {
 				return nil, err
@@ -232,128 +247,94 @@ func parsePackage(l *lexer, pkgbuild *PKGBUILD) (*PKGBUILD, error) {
 			}
 			pkgbuild.Epoch = int(epoch)
 		case itemPkgdesc:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Pkgdesc = next.val
 		case itemArch:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			if arch, ok := archs[next.val]; ok {
 				pkgbuild.Arch = append(pkgbuild.Arch, arch)
 			} else {
 				return nil, fmt.Errorf("invalid Arch: %s", next.val)
 			}
 		case itemURL:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.URL = next.val
 		case itemLicense:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.License = append(pkgbuild.License, next.val)
 		case itemGroups:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Groups = append(pkgbuild.Groups, next.val)
 		case itemDepends:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Depends = append(pkgbuild.Depends, next.val)
 		case itemOptdepends:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Optdepends = append(pkgbuild.Optdepends, next.val)
 		case itemMakedepends:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Makedepends = append(pkgbuild.Makedepends, next.val)
 		case itemCheckdepends:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Checkdepends = append(pkgbuild.Checkdepends, next.val)
 		case itemProvides:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Provides = append(pkgbuild.Provides, next.val)
 		case itemConflicts:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Conflicts = append(pkgbuild.Conflicts, next.val)
 		case itemReplaces:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Replaces = append(pkgbuild.Replaces, next.val)
 		case itemBackup:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Backup = append(pkgbuild.Backup, next.val)
 		case itemOptions:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Options = append(pkgbuild.Options, next.val)
 		case itemInstall:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Install = next.val
 		case itemChangelog:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Changelog = next.val
 		case itemSource:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Source = append(pkgbuild.Source, next.val)
 		case itemNoextract:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Noextract = append(pkgbuild.Noextract, next.val)
 		case itemMd5sums:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Md5sums = append(pkgbuild.Md5sums, next.val)
 		case itemSha1sums:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Sha1sums = append(pkgbuild.Sha1sums, next.val)
 		case itemSha224sums:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Sha224sums = append(pkgbuild.Sha224sums, next.val)
 		case itemSha256sums:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Sha256sums = append(pkgbuild.Sha256sums, next.val)
 		case itemSha384sums:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Sha384sums = append(pkgbuild.Sha384sums, next.val)
 		case itemSha512sums:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Sha512sums = append(pkgbuild.Sha512sums, next.val)
 		case itemValidpgpkeys:
-			next = l.nextItem()
+			next = lexer.nextItem()
 			pkgbuild.Validpgpkeys = append(pkgbuild.Validpgpkeys, next.val)
 		case itemEndSplit:
-			return pkgbuild, nil
 		case itemError:
 			return nil, fmt.Errorf(token.val)
-		}
-	}
-}
-
-// parses a sourced PKGBUILD
-func parse(input string) ([]*PKGBUILD, error) {
-	var pkgbase *PKGBUILD
-	var pkgbuild *PKGBUILD
-	var err error
-	var next item
-
-	pkgbuilds := []*PKGBUILD{}
-	lexer := lex(input)
-Loop:
-	for {
-		token := lexer.nextItem()
-		switch token.typ {
-		case itemPkgbase:
-			next = lexer.nextItem()
-			pkgbase = &PKGBUILD{Epoch: 0, Pkgbase: next.val}
-			pkgbase, err = parsePackage(lexer, pkgbase)
-			if err != nil {
-				return nil, err
-			}
-		case itemPkgname:
-			next = lexer.nextItem()
-			pkgb := *pkgbase
-			pkgb.Pkgname = next.val
-			pkgbuild, err = parsePackage(lexer, &pkgb)
-			if err != nil {
-				return nil, err
-			}
-			pkgbuilds = append(pkgbuilds, pkgbuild)
 		case itemEOF:
 			break Loop
 		default:
 			return nil, fmt.Errorf(token.val)
 		}
 	}
-	return pkgbuilds, nil
+	return pkgbuild, nil
 }
 
 // parse and validate a version string

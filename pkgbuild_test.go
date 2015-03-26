@@ -149,15 +149,13 @@ func TestRandomCorePKGBUILDs(t *testing.T) {
 
 	for _, pkgb := range pkgbs {
 		path := "./test_pkgbuilds/PKGBUILD_" + pkgb
-		pkgs, err := ParsePKGBUILD(path)
+		pkg, err := ParsePKGBUILD(path)
 		if err != nil {
 			t.Errorf("PKGBUILD for %s did not parse: %s", pkgb, err.Error())
 		}
 
-		for _, pkg := range pkgs {
-			if pkg.Pkgbase != pkgb {
-				t.Errorf("pkgbase for %s should be %s", pkgb, pkg.Pkgbase)
-			}
+		if pkg.Pkgbase != pkgb {
+			t.Errorf("pkgbase for %s should be %s", pkgb, pkg.Pkgbase)
 		}
 	}
 }
@@ -176,15 +174,13 @@ func TestRandomCoreSRCINFOs(t *testing.T) {
 
 	for _, srcinfo := range srcinfos {
 		path := "./test_pkgbuilds/SRCINFO_" + srcinfo
-		pkgs, err := ParseSRCINFO(path)
+		pkg, err := ParseSRCINFO(path)
 		if err != nil {
 			t.Errorf("PKGBUILD for %s did not parse: %s", srcinfo, err.Error())
 		}
 
-		for _, pkg := range pkgs {
-			if pkg.Pkgbase != srcinfo {
-				t.Errorf("pkgbase for %s should be %s", srcinfo, pkg.Pkgbase)
-			}
+		if pkg.Pkgbase != srcinfo {
+			t.Errorf("pkgbase for %s should be %s", srcinfo, pkg.Pkgbase)
 		}
 	}
 }
