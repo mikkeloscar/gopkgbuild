@@ -34,14 +34,13 @@ import (
 )
 
 func main() {
-    pkgbs, err := ParsePKGBUILD("/path/to/PKGBUILD")
+    pkgb, err := ParsePKGBUILD("/path/to/PKGBUILD")
     if err != nil {
         fmt.Println(err)
     }
 
-    for _, pkgb := range pkgbs {
-        fmt.Printf("Package name: %s", pkgb.Pkgname)
-
+    for _, subPkg := range pkgb.Pkgnames {
+       fmt.Printf("Package name: %s", subPkg)
     }
 }
 ```
