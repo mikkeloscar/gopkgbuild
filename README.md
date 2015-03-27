@@ -14,7 +14,7 @@ into a slice of PKGBUILD structs.
 
 - [x] Handle split PKGBUILDs like [linux][linux-pkg]
 - [ ] Try to parse maintainer from top of PKGBUILD
-- [ ] Handle multiple dependency versions
+- [x] Handle multiple dependency versions
 - [x] Add support for reading a `.SRCINFO` file directly
 - [x] Update to pacman 4.2
 

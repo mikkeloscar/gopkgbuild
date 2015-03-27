@@ -28,6 +28,33 @@ func TestVersionParsing(t *testing.T) {
 	}
 }
 
+// Test complete-version parsing
+func TestCompleteVersionParsing(t *testing.T) {
+	versions := map[string]*CompleteVersion{
+		"1:1.0beta": &CompleteVersion{Version("1.0beta"), 1, 0},
+		"1.0":       &CompleteVersion{Version("1.0"), 0, 0},
+		"2.3-2":     &CompleteVersion{Version("2.3"), 0, 2},
+		"1::":       nil,
+		"4.3--1":    nil,
+		"4.1-a":     nil,
+		"f:2.3":     nil,
+		"1.?":       nil,
+	}
+
+	for version, expected := range versions {
+		ver, err := parseCompleteVersion(version)
+		if err != nil && expected != nil {
+			t.Errorf("CompleteVersion string '%s' should not parse", version)
+		}
+
+		if err == nil && expected != nil {
+			if ver.Version != expected.Version || ver.Epoch != expected.Epoch || ver.Pkgrel != expected.Pkgrel {
+				t.Errorf("CompleteVersion string '%s' should parse", version)
+			}
+		}
+	}
+}
+
 // Test Newer method
 func TestNewer(t *testing.T) {
 	a := &PKGBUILD{

@@ -1,11 +1,13 @@
 package pkgbuild
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 )
 
 // Arch is a system architecture
@@ -33,6 +35,15 @@ var archs = map[string]Arch{
 	"armv7h": ARMv7h,
 }
 
+// Dependency describes a dependency with min and max version, if any.
+type Dependency struct {
+	Name   string           // dependency name
+	MinVer *CompleteVersion // min version
+	sgt    bool             // defines if min version is strictly greater than
+	MaxVer *CompleteVersion // max version
+	slt    bool             // defines if max version is strictly less than
+}
+
 // PKGBUILD is a struct describing a parsed PKGBUILD file.
 // Required fields are:
 //	pkgname
@@ -54,7 +65,7 @@ type PKGBUILD struct {
 	URL          string
 	License      []string // recommended
 	Groups       []string
-	Depends      []string
+	Depends      []*Dependency
 	Optdepends   []string
 	Makedepends  []string
 	Checkdepends []string
@@ -267,7 +278,11 @@ Loop:
 			pkgbuild.Groups = append(pkgbuild.Groups, next.val)
 		case itemDepends:
 			next = lexer.nextItem()
-			pkgbuild.Depends = append(pkgbuild.Depends, next.val)
+			deps, err := parseDependency(next.val, pkgbuild.Depends)
+			if err != nil {
+				return nil, err
+			}
+			pkgbuild.Depends = deps
 		case itemOptdepends:
 			next = lexer.nextItem()
 			pkgbuild.Optdepends = append(pkgbuild.Optdepends, next.val)
@@ -346,6 +361,49 @@ func parseVersion(s string) (Version, error) {
 	return "", fmt.Errorf("invalid version string: %s", s)
 }
 
+func parseCompleteVersion(s string) (*CompleteVersion, error) {
+	var err error
+	epoch := 0
+	rel := 0
+
+	// handle possible epoch
+	versions := strings.Split(s, ":")
+	if len(versions) > 2 {
+		return nil, fmt.Errorf("invalid version format: %s", s)
+	}
+
+	if len(versions) > 1 {
+		epoch, err = strconv.Atoi(versions[0])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// handle possible rel
+	versions = strings.Split(versions[len(versions)-1], "-")
+	if len(versions) > 2 {
+		return nil, fmt.Errorf("invalid version format: %s", s)
+	}
+
+	if len(versions) > 1 {
+		rel, err = strconv.Atoi(versions[1])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// finally check that the actual version is valid
+	if validPkgver(versions[0]) {
+		return &CompleteVersion{
+			Version: Version(versions[0]),
+			Epoch:   epoch,
+			Pkgrel:  rel,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("invalid version format: %s", s)
+}
+
 // check if name is a valid pkgname format
 func validPkgname(name string) bool {
 	if len(name) < 1 {
@@ -382,6 +440,78 @@ func validPkgver(version string) bool {
 	}
 
 	return true
+}
+
+// parse dependency with possible version restriction
+func parseDependency(dep string, deps []*Dependency) ([]*Dependency, error) {
+	var name string
+	var dependency *Dependency
+
+	if dep[0] == '-' {
+		return nil, fmt.Errorf("invalid dependency name")
+	}
+
+	i := 0
+	for _, c := range dep {
+		if !isValidPkgnameChar(uint8(c)) {
+			break
+		}
+		i++
+	}
+
+	// check if the dependency has been set before
+	name = dep[0:i]
+	for _, d := range deps {
+		if d.Name == name {
+			dependency = d
+		}
+	}
+
+	if dependency == nil {
+		dependency = &Dependency{
+			Name: name,
+			sgt:  false,
+			slt:  false,
+		}
+		deps = append(deps, dependency)
+	}
+
+	if len(dep) == len(name) {
+		return deps, nil
+	}
+
+	i++
+	var eq bytes.Buffer
+	for _, c := range dep[i:] {
+		if c != '<' || c != '>' || c != '=' {
+			i++
+			break
+		}
+		eq.WriteRune(c)
+	}
+
+	version, err := parseCompleteVersion(dep[i:])
+	if err != nil {
+		return nil, err
+	}
+
+	switch eq.String() {
+	case "==":
+		dependency.MinVer = version
+		dependency.MaxVer = version
+	case "<=":
+		dependency.MaxVer = version
+	case ">=":
+		dependency.MinVer = version
+	case "<":
+		dependency.MaxVer = version
+		dependency.slt = true
+	case ">":
+		dependency.MinVer = version
+		dependency.sgt = true
+	}
+
+	return deps, nil
 }
 
 // isLowerAlpha reports whether c is a lowercase alpha character

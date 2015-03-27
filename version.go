@@ -5,6 +5,12 @@ import "strconv"
 // Version string
 type Version string
 
+type CompleteVersion struct {
+	Version Version
+	Epoch   int
+	Pkgrel  int
+}
+
 // Compare alpha and numeric segments of two versions.
 // return 1: a is newer than b
 //        0: a and b are the same version
