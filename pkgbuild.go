@@ -67,8 +67,8 @@ type PKGBUILD struct {
 	Groups       []string
 	Depends      []*Dependency
 	Optdepends   []string
-	Makedepends  []string
-	Checkdepends []string
+	Makedepends  []*Dependency
+	Checkdepends []*Dependency
 	Provides     []string
 	Conflicts    []string
 	Replaces     []string
@@ -288,10 +288,18 @@ Loop:
 			pkgbuild.Optdepends = append(pkgbuild.Optdepends, next.val)
 		case itemMakedepends:
 			next = lexer.nextItem()
-			pkgbuild.Makedepends = append(pkgbuild.Makedepends, next.val)
+			deps, err := parseDependency(next.val, pkgbuild.Makedepends)
+			if err != nil {
+				return nil, err
+			}
+			pkgbuild.Makedepends = deps
 		case itemCheckdepends:
 			next = lexer.nextItem()
-			pkgbuild.Checkdepends = append(pkgbuild.Checkdepends, next.val)
+			deps, err := parseDependency(next.val, pkgbuild.Checkdepends)
+			if err != nil {
+				return nil, err
+			}
+			pkgbuild.Checkdepends = deps
 		case itemProvides:
 			next = lexer.nextItem()
 			pkgbuild.Provides = append(pkgbuild.Provides, next.val)
