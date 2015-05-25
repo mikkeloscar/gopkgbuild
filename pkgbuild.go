@@ -11,7 +11,7 @@ import (
 )
 
 // Arch is a system architecture
-type Arch int
+type Arch uint8
 
 const (
 	// Any architecture
