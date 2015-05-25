@@ -42,7 +42,7 @@ func TestCompleteVersionParsing(t *testing.T) {
 	}
 
 	for version, expected := range versions {
-		ver, err := parseCompleteVersion(version)
+		ver, err := NewCompleteVersion(version)
 		if err != nil && expected != nil {
 			t.Errorf("CompleteVersion string '%s' should not parse", version)
 		}

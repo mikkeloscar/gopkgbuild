@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 )
 
 // Arch is a system architecture
@@ -369,49 +368,6 @@ func parseVersion(s string) (Version, error) {
 	return "", fmt.Errorf("invalid version string: %s", s)
 }
 
-func parseCompleteVersion(s string) (*CompleteVersion, error) {
-	var err error
-	epoch := 0
-	rel := 0
-
-	// handle possible epoch
-	versions := strings.Split(s, ":")
-	if len(versions) > 2 {
-		return nil, fmt.Errorf("invalid version format: %s", s)
-	}
-
-	if len(versions) > 1 {
-		epoch, err = strconv.Atoi(versions[0])
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// handle possible rel
-	versions = strings.Split(versions[len(versions)-1], "-")
-	if len(versions) > 2 {
-		return nil, fmt.Errorf("invalid version format: %s", s)
-	}
-
-	if len(versions) > 1 {
-		rel, err = strconv.Atoi(versions[1])
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// finally check that the actual version is valid
-	if validPkgver(versions[0]) {
-		return &CompleteVersion{
-			Version: Version(versions[0]),
-			Epoch:   epoch,
-			Pkgrel:  rel,
-		}, nil
-	}
-
-	return nil, fmt.Errorf("invalid version format: %s", s)
-}
-
 // check if name is a valid pkgname format
 func validPkgname(name string) bool {
 	if len(name) < 1 {
@@ -498,7 +454,7 @@ func parseDependency(dep string, deps []*Dependency) ([]*Dependency, error) {
 		eq.WriteRune(c)
 	}
 
-	version, err := parseCompleteVersion(dep[i:])
+	version, err := NewCompleteVersion(dep[i:])
 	if err != nil {
 		return nil, err
 	}

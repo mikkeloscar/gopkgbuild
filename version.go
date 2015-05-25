@@ -1,6 +1,10 @@
 package pkgbuild
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 // Version string
 type Version string
@@ -9,6 +13,51 @@ type CompleteVersion struct {
 	Version Version
 	Epoch   int
 	Pkgrel  int
+}
+
+// NewCompleteVersion creates a CompleteVersion including basic version, epoch
+// and rel from string
+func NewCompleteVersion(s string) (*CompleteVersion, error) {
+	var err error
+	epoch := 0
+	rel := 0
+
+	// handle possible epoch
+	versions := strings.Split(s, ":")
+	if len(versions) > 2 {
+		return nil, fmt.Errorf("invalid version format: %s", s)
+	}
+
+	if len(versions) > 1 {
+		epoch, err = strconv.Atoi(versions[0])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// handle possible rel
+	versions = strings.Split(versions[len(versions)-1], "-")
+	if len(versions) > 2 {
+		return nil, fmt.Errorf("invalid version format: %s", s)
+	}
+
+	if len(versions) > 1 {
+		rel, err = strconv.Atoi(versions[1])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// finally check that the actual version is valid
+	if validPkgver(versions[0]) {
+		return &CompleteVersion{
+			Version: Version(versions[0]),
+			Epoch:   epoch,
+			Pkgrel:  rel,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("invalid version format: %s", s)
 }
 
 // Compare alpha and numeric segments of two versions.
