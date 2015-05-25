@@ -11,8 +11,12 @@ type Version string
 
 type CompleteVersion struct {
 	Version Version
-	Epoch   int
-	Pkgrel  int
+	Epoch   uint8
+	Pkgrel  uint8
+}
+
+func (c *CompleteVersion) String() string {
+	return fmt.Sprintf("%d-%s-%d", c.Epoch, c.Version, c.Pkgrel)
 }
 
 // NewCompleteVersion creates a CompleteVersion including basic version, epoch
@@ -52,12 +56,74 @@ func NewCompleteVersion(s string) (*CompleteVersion, error) {
 	if validPkgver(versions[0]) {
 		return &CompleteVersion{
 			Version: Version(versions[0]),
-			Epoch:   epoch,
-			Pkgrel:  rel,
+			Epoch:   uint8(epoch),
+			Pkgrel:  uint8(rel),
 		}, nil
 	}
 
 	return nil, fmt.Errorf("invalid version format: %s", s)
+}
+
+// Older returns true if a is older than the argument version string
+func (a *CompleteVersion) Older(v string) bool {
+	b, err := NewCompleteVersion(v)
+	if err != nil {
+		return false
+	}
+
+	return a.cmp(b) == -1
+}
+
+// Newer returns true if a is newer than the argument version string
+func (a *CompleteVersion) Newer(v string) bool {
+	b, err := NewCompleteVersion(v)
+	if err != nil {
+		return false
+	}
+
+	return a.cmp(b) == 1
+}
+
+// Equal returns true if a is equal to the argument version string
+func (a *CompleteVersion) Equal(v string) bool {
+	b, err := NewCompleteVersion(v)
+	if err != nil {
+		return false
+	}
+
+	return a.cmp(b) == 0
+}
+
+// Compare a to b:
+// return 1: a is newer than b
+//        0: a and b are the same version
+//       -1: b is newer than a
+func (a *CompleteVersion) cmp(b *CompleteVersion) int8 {
+	if a.Epoch > b.Epoch {
+		return 1
+	}
+
+	if a.Epoch < b.Epoch {
+		return -1
+	}
+
+	if a.Version.bigger(b.Version) {
+		return 1
+	}
+
+	if b.Version.bigger(a.Version) {
+		return -1
+	}
+
+	if a.Pkgrel > b.Pkgrel {
+		return 1
+	}
+
+	if a.Pkgrel < b.Pkgrel {
+		return -1
+	}
+
+	return 0
 }
 
 // Compare alpha and numeric segments of two versions.

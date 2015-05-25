@@ -81,6 +81,39 @@ func TestAlphaCompare(t *testing.T) {
 	}
 }
 
+// Test CompleteVersion comparisons
+func TestCompleteVersionComparison(t *testing.T) {
+	a := &CompleteVersion{
+		Version: "2",
+		Epoch:   1,
+		Pkgrel:  2,
+	}
+
+	older := []string{
+		"0-3-4",
+		"1-2-1",
+		"1-1-1",
+	}
+
+	for _, o := range older {
+		if a.Older(o) {
+			t.Errorf("%s should be older than %s", o, a.String())
+		}
+	}
+
+	newer := []string{
+		"2-1-1",
+		"1-3-1",
+		"1-2-3",
+	}
+
+	for _, n := range newer {
+		if a.Newer(n) {
+			t.Errorf("%s should be newer than %s", n, a.String())
+		}
+	}
+}
+
 // Benchmark rpmvercmp
 func BenchmarkVersionCompare(b *testing.B) {
 	for i := 0; i < b.N; i++ {
