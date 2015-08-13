@@ -66,5 +66,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 [archlinux]: http://archlinux.org
 [pkgbuilds]: https://wiki.archlinux.org/index.php/PKGBUILD
 [linux-pkg]: https://projects.archlinux.org/svntogit/packages.git/tree/trunk/PKGBUILD?h=packages/linux
-[pkg-introspec]: https://github.com/falconindy/pkgbuild-introspection
+[pkg-introspec]: https://www.archlinux.org/packages/community/any/pkgbuild-introspection/
 [godoc]: https://godoc.org/github.com/mikkeloscar/gopkgbuild
