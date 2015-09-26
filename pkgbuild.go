@@ -129,6 +129,17 @@ func (p *PKGBUILD) Version() string {
 	return fmt.Sprintf("%s-%d", p.Pkgver, p.Pkgrel)
 }
 
+// BuildDepends is Depends, MakeDepends and CheckDepends combined.
+func (p *PKGBUILD) BuildDepends() []*Dependency {
+	// TODO real merge
+	deps := make([]*Dependency, len(p.Depends)+len(p.Makedepends)+len(p.Checkdepends))
+
+	deps = append(p.Depends, p.Makedepends...)
+	deps = append(deps, p.Checkdepends...)
+
+	return deps
+}
+
 // MustParsePKGBUILD must parse the PKGBUILD given by path or it will panic
 func MustParsePKGBUILD(path string) *PKGBUILD {
 	pkgbuild, err := ParsePKGBUILD(path)
