@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 )
 
 // Arch is a system architecture
@@ -138,6 +139,30 @@ func (p *PKGBUILD) BuildDepends() []*Dependency {
 	deps = append(deps, p.Checkdepends...)
 
 	return deps
+}
+
+// IsDevel returns true if package contains devel packages (-{bzr,git,svn,hg})
+// TODO: more robust check.
+func (p *PKGBUILD) IsDevel() bool {
+	for _, name := range p.Pkgnames {
+		if strings.HasSuffix(name, "-git") {
+			return true
+		}
+
+		if strings.HasSuffix(name, "-svn") {
+			return true
+		}
+
+		if strings.HasSuffix(name, "-hg") {
+			return true
+		}
+
+		if strings.HasSuffix(name, "-bzr") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // MustParsePKGBUILD must parse the PKGBUILD given by path or it will panic
