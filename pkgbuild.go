@@ -130,6 +130,16 @@ func (p *PKGBUILD) Version() string {
 	return fmt.Sprintf("%s-%d", p.Pkgver, p.Pkgrel)
 }
 
+// CompleteVersion returns a Complete version struct including version, rel and
+// epoch.
+func (p *PKGBUILD) CompleteVersion() CompleteVersion {
+	return CompleteVersion{
+		Version: p.Pkgver,
+		Epoch:   uint8(p.Epoch),
+		Pkgrel:  uint8(p.Pkgrel),
+	}
+}
+
 // BuildDepends is Depends, MakeDepends and CheckDepends combined.
 func (p *PKGBUILD) BuildDepends() []*Dependency {
 	// TODO real merge
