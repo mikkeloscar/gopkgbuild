@@ -163,29 +163,29 @@ func TestVersionMethod(t *testing.T) {
 }
 
 // Test random pkgbuilds from Arch core
-func TestRandomCorePKGBUILDs(t *testing.T) {
-	pkgbs := []string{
-		"sudo",
-		"pacman",
-		"openssh",
-		"grub",
-		"glibc",
-		"systemd",
-		"linux",
-	}
+// func TestRandomCorePKGBUILDs(t *testing.T) {
+// 	pkgbs := []string{
+// 		"sudo",
+// 		"pacman",
+// 		"openssh",
+// 		"grub",
+// 		"glibc",
+// 		"systemd",
+// 		"linux",
+// 	}
 
-	for _, pkgb := range pkgbs {
-		path := "./test_pkgbuilds/PKGBUILD_" + pkgb
-		pkg, err := ParsePKGBUILD(path)
-		if err != nil {
-			t.Errorf("PKGBUILD for %s did not parse: '%s'", pkgb, err.Error())
-		}
+// 	for _, pkgb := range pkgbs {
+// 		path := "./test_pkgbuilds/PKGBUILD_" + pkgb
+// 		pkg, err := ParsePKGBUILD(path)
+// 		if err != nil {
+// 			t.Errorf("PKGBUILD for %s did not parse: '%s'", pkgb, err.Error())
+// 		}
 
-		if pkg.Pkgbase != pkgb {
-			t.Errorf("pkgbase for %s should be %s", pkgb, pkg.Pkgbase)
-		}
-	}
-}
+// 		if pkg.Pkgbase != pkgb {
+// 			t.Errorf("pkgbase for %s should be %s", pkgb, pkg.Pkgbase)
+// 		}
+// 	}
+// }
 
 // Test random SRCINFO files based on pkgbuilds from Arch core
 func TestRandomCoreSRCINFOs(t *testing.T) {
@@ -209,5 +209,28 @@ func TestRandomCoreSRCINFOs(t *testing.T) {
 		if pkg.Pkgbase != srcinfo {
 			t.Errorf("pkgbase for %s should be %s", srcinfo, pkg.Pkgbase)
 		}
+	}
+}
+
+func TestParseDependency(t *testing.T) {
+	deps := make([]*Dependency, 0)
+	_, err := parseDependency("linux-mainline-headers<4.6rc1", deps)
+	if err != nil {
+		t.Errorf("could not parse dependency %s: %s", "bla", err.Error())
+	}
+
+	_, err = parseDependency("linux-mainline-headers<=4.6rc1", deps)
+	if err != nil {
+		t.Errorf("could not parse dependency %s: %s", "bla", err.Error())
+	}
+
+	_, err = parseDependency("linux-mainline-headers>=4.6rc1", deps)
+	if err != nil {
+		t.Errorf("could not parse dependency %s: %s", "bla", err.Error())
+	}
+
+	_, err = parseDependency("linux-mainline-headers==4.6rc1", deps)
+	if err != nil {
+		t.Errorf("could not parse dependency %s: %s", "bla", err.Error())
 	}
 }

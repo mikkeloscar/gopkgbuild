@@ -490,14 +490,14 @@ func parseDependency(dep string, deps []*Dependency) ([]*Dependency, error) {
 		return deps, nil
 	}
 
-	i++
 	var eq bytes.Buffer
 	for _, c := range dep[i:] {
-		if c != '<' || c != '>' || c != '=' {
+		if c == '<' || c == '>' || c == '=' {
 			i++
-			break
+			eq.WriteRune(c)
+			continue
 		}
-		eq.WriteRune(c)
+		break
 	}
 
 	version, err := NewCompleteVersion(dep[i:])
