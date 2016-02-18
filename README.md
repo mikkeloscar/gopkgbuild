@@ -2,13 +2,8 @@
 
 # goPKGBUILD
 
-A golang package for parsing [Arch Linux][archlinux] [PKGBUILDs][pkgbuilds]. It
-uses `mksrcinfo` to create a `.SRCINFO` formatted string which is then parsed
-into a slice of PKGBUILD structs.
-
-## Dependencies
-
-* [pkgbuild-introspection][pkg-introspec] (specifically `mksrcinfo`)
+A golang package for parsing [Arch Linux][archlinux] `.SRCINFO` files
+([PKGBUILDs][pkgbuilds]).
 
 ## TODO
 
@@ -34,7 +29,7 @@ import (
 )
 
 func main() {
-    pkgb, err := ParsePKGBUILD("/path/to/PKGBUILD")
+    pkgb, err := ParseSRCINFO("/path/to/.SRCINFO")
     if err != nil {
         fmt.Println(err)
     }
@@ -47,7 +42,7 @@ func main() {
 
 ## LICENSE
 
-Copyright (C) 2015  Mikkel Oscar Lyderik Larsen
+Copyright (C) 2016  Mikkel Oscar Lyderik Larsen
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -173,40 +171,6 @@ func (p *PKGBUILD) IsDevel() bool {
 	}
 
 	return false
-}
-
-// MustParsePKGBUILD must parse the PKGBUILD given by path or it will panic
-func MustParsePKGBUILD(path string) *PKGBUILD {
-	pkgbuild, err := ParsePKGBUILD(path)
-	if err != nil {
-		panic(err)
-	}
-	return pkgbuild
-}
-
-// ParsePKGBUILD parses a PKGBUILD given by path.
-// Note that this operation is unsafe and should only be used on trusted
-// PKGBUILDs or within some kind of jail, e.g. a VM, container or chroot
-func ParsePKGBUILD(path string) (*PKGBUILD, error) {
-	// TODO parse maintainer if possible (read first x bytes of the file)
-	// check for valid path
-	if _, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("%s: no such file", path)
-		}
-		return nil, err
-	}
-
-	// depend on pkgbuild-introspection (mksrcinfo)
-	out, err := exec.Command("/usr/bin/mksrcinfo", "-o", "/dev/stdout", path).Output()
-	if err != nil {
-		if _, ok := err.(*exec.ExitError); ok {
-			return nil, fmt.Errorf("unable to parse PKGBUILD: %s", path)
-		}
-		return nil, err
-	}
-
-	return parsePKGBUILD(string(out))
 }
 
 // MustParseSRCINFO must parse the .SRCINFO given by path or it will panic

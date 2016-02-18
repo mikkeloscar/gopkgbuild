@@ -162,31 +162,6 @@ func TestVersionMethod(t *testing.T) {
 	}
 }
 
-// Test random pkgbuilds from Arch core
-// func TestRandomCorePKGBUILDs(t *testing.T) {
-// 	pkgbs := []string{
-// 		"sudo",
-// 		"pacman",
-// 		"openssh",
-// 		"grub",
-// 		"glibc",
-// 		"systemd",
-// 		"linux",
-// 	}
-
-// 	for _, pkgb := range pkgbs {
-// 		path := "./test_pkgbuilds/PKGBUILD_" + pkgb
-// 		pkg, err := ParsePKGBUILD(path)
-// 		if err != nil {
-// 			t.Errorf("PKGBUILD for %s did not parse: '%s'", pkgb, err.Error())
-// 		}
-
-// 		if pkg.Pkgbase != pkgb {
-// 			t.Errorf("pkgbase for %s should be %s", pkgb, pkg.Pkgbase)
-// 		}
-// 	}
-// }
-
 // Test random SRCINFO files based on pkgbuilds from Arch core
 func TestRandomCoreSRCINFOs(t *testing.T) {
 	srcinfos := []string{
