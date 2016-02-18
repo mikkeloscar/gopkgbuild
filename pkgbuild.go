@@ -419,10 +419,11 @@ func validPkgver(version string) bool {
 // ParseDeps parses a string slice of dependencies into a slice of Dependency
 // objects.
 func ParseDeps(deps []string) ([]*Dependency, error) {
+	var err error
 	dependencies := make([]*Dependency, 0)
 
 	for _, dep := range deps {
-		_, err := parseDependency(dep, dependencies)
+		dependencies, err = parseDependency(dep, dependencies)
 		if err != nil {
 			return nil, err
 		}
