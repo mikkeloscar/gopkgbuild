@@ -452,6 +452,21 @@ func validPkgver(version string) bool {
 	return true
 }
 
+// ParseDeps parses a string slice of dependencies into a slice of Dependency
+// objects.
+func ParseDeps(deps []string) ([]*Dependency, error) {
+	dependencies := make([]*Dependency, 0)
+
+	for _, dep := range deps {
+		_, err := parseDependency(dep, dependencies)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return dependencies, nil
+}
+
 // parse dependency with possible version restriction
 func parseDependency(dep string, deps []*Dependency) ([]*Dependency, error) {
 	var name string
