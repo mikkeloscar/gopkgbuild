@@ -30,6 +30,8 @@ var archs = map[string]Arch{
 	"any":    Any,
 	"i686":   I686,
 	"x86_64": X8664,
+	"armv5":  ARMv5,
+	"armv6h": ARMv6h,
 	"armv7h": ARMv7h,
 }
 
