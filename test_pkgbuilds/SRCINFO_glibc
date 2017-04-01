@@ -8,6 +8,7 @@ pkgbase = glibc
 	install = glibc.install
 	arch = i686
 	arch = x86_64
+	arch = armv6h
 	groups = base
 	license = GPL
 	license = LGPL
