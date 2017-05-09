@@ -24,15 +24,21 @@ const (
 	ARMv6h
 	// ARMv7h architecture (archlinux-arm)
 	ARMv7h
+	// MIPS64 architecture
+	MIPS64
 )
 
 var archs = map[string]Arch{
-	"any":    Any,
-	"i686":   I686,
-	"x86_64": X8664,
-	"armv5":  ARMv5,
-	"armv6h": ARMv6h,
-	"armv7h": ARMv7h,
+	"any":      Any,
+	"i686":     I686,
+	"x86_64":   X8664,
+	"x86":      I686,
+	"aarch64":  X8664,
+	"arm":      ARMv5,
+	"armv5":    ARMv5,
+	"armv6h":   ARMv6h,
+	"armv7h":   ARMv7h,
+	"mips64el": MIPS64,
 }
 
 // Dependency describes a dependency with min and max version, if any.
