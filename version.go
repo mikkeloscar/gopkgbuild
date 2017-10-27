@@ -24,7 +24,7 @@ func (c *CompleteVersion) String() string {
 func NewCompleteVersion(s string) (*CompleteVersion, error) {
 	var err error
 	epoch := 0
-	rel := 0
+	rel := 0.0
 
 	// handle possible epoch
 	versions := strings.Split(s, ":")
@@ -46,7 +46,7 @@ func NewCompleteVersion(s string) (*CompleteVersion, error) {
 	}
 
 	if len(versions) > 1 {
-		rel, err = strconv.Atoi(versions[1])
+		rel, err = strconv.ParseFloat(versions[1], 64)
 		if err != nil {
 			return nil, err
 		}
