@@ -526,5 +526,5 @@ func isValidPkgnameChar(c uint8) bool {
 
 // check if c is a valid pkgver char
 func isValidPkgverChar(c uint8) bool {
-	return isAlphaNumeric(c) || c == '_' || c == '+' || c == '.'
+	return isAlphaNumeric(c) || c == '_' || c == '+' || c == '.' || c == '~'
 }
