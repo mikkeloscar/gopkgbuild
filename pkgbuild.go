@@ -447,6 +447,10 @@ func parseDependency(dep string, deps []*Dependency) ([]*Dependency, error) {
 	var name string
 	var dependency *Dependency
 
+	if dep == "" {
+		return deps, nil
+	}
+
 	if dep[0] == '-' {
 		return nil, fmt.Errorf("invalid dependency name")
 	}
