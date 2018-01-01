@@ -204,6 +204,13 @@ func ParseSRCINFO(path string) (*PKGBUILD, error) {
 	return parsePKGBUILD(string(f))
 }
 
+// ParseSRCINFOContent parses a .SRCINFO formatted byte slice.
+// This is a safe alternative to ParsePKGBUILD given that the .SRCINFO content
+// is available
+func ParseSRCINFOContent(content []byte) (*PKGBUILD, error) {
+	return parsePKGBUILD(string(content))
+}
+
 // parse a PKGBUILD and check that the required fields has a non-empty value
 func parsePKGBUILD(input string) (*PKGBUILD, error) {
 	pkgb, err := parse(input)
