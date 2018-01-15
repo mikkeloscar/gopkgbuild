@@ -201,7 +201,8 @@ func lexEnv(l *lexer) stateFn {
 		case isAlphaNumericUnderscore(r):
 			return lexVariable
 		case r == '\n':
-			if l.input[l.start:l.pos] == "\n\n" {
+			buffer := l.input[l.start:l.pos]
+			if buffer == "\n" || buffer == "\n\n" {
 				l.ignore()
 				l.emit(itemEndSplit)
 			}
