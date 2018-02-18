@@ -8,40 +8,6 @@ import (
 	"strings"
 )
 
-// Arch is a system architecture
-type Arch uint8
-
-const (
-	// Any architecture
-	Any Arch = iota
-	// I686 architecture
-	I686
-	// X8664 x86_64 (64bit) architecture
-	X8664
-	// ARMv5 architecture (archlinux-arm)
-	ARMv5
-	// ARMv6h architecture (archlinux-arm)
-	ARMv6h
-	// ARMv7h architecture (archlinux-arm)
-	ARMv7h
-	// ARMv8 architecture (64bit) (archlinux-arm)
-	ARMv8
-	// MIPS64 architecture
-	MIPS64
-)
-
-var archs = map[string]Arch{
-	"any":      Any,
-	"i686":     I686,
-	"x86":      I686,
-	"x86_64":   X8664,
-	"aarch64":  ARMv8,
-	"arm":      ARMv5,
-	"armv5":    ARMv5,
-	"armv6h":   ARMv6h,
-	"armv7h":   ARMv7h,
-	"mips64el": MIPS64,
-}
 
 // Dependency describes a dependency with min and max version, if any.
 type Dependency struct {
@@ -69,7 +35,7 @@ type PKGBUILD struct {
 	Epoch        int
 	Pkgbase      string
 	Pkgdesc      string
-	Arch         []Arch // required
+	Arch         []string // required
 	URL          string
 	License      []string // recommended
 	Groups       []string
@@ -241,17 +207,17 @@ func parsePKGBUILD(input string) (*PKGBUILD, error) {
 
 // parses a SRCINFO formatted PKGBUILD
 func parse(input string) (*PKGBUILD, error) {
-	var pkgbuild *PKGBUILD
+	pkgbuild := &PKGBUILD{}
 	var next item
 
-	lexer := lex(input)
+	lexer := lex(input, pkgbuild)
 Loop:
 	for {
 		token := lexer.nextItem()
 		switch token.typ {
 		case itemPkgbase:
 			next = lexer.nextItem()
-			pkgbuild = &PKGBUILD{Epoch: 0, Pkgbase: next.val}
+			pkgbuild.Pkgbase = next.val
 		case itemPkgname:
 			next = lexer.nextItem()
 			pkgbuild.Pkgnames = append(pkgbuild.Pkgnames, next.val)
@@ -288,11 +254,7 @@ Loop:
 			pkgbuild.Pkgdesc = next.val
 		case itemArch:
 			next = lexer.nextItem()
-			if arch, ok := archs[next.val]; ok {
-				pkgbuild.Arch = append(pkgbuild.Arch, arch)
-			} else {
-				return nil, fmt.Errorf("invalid Arch: %s", next.val)
-			}
+			pkgbuild.Arch = append(pkgbuild.Arch, next.val)
 		case itemURL:
 			next = lexer.nextItem()
 			pkgbuild.URL = next.val

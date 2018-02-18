@@ -125,6 +125,7 @@ type lexer struct {
 	width   pos
 	lastPos pos
 	items   chan item // channel of scanned items
+	pkgbuild *PKGBUILD //inprogress pkgbuild we are constructing
 }
 
 // next returns the next rune in the input
@@ -176,10 +177,11 @@ func (l *lexer) nextItem() item {
 	return item
 }
 
-func lex(input string) *lexer {
+func lex(input string, pkgbuild *PKGBUILD) *lexer {
 	l := &lexer{
 		input: input,
 		items: make(chan item),
+		pkgbuild: pkgbuild,
 	}
 	go l.run()
 	return l
@@ -244,8 +246,10 @@ func lexVariable(l *lexer) stateFn {
 			// strip arch from source_arch like constructs
 			witharch := strings.SplitN(variable, "_", 2)
 			if len(witharch) == 2 {
-				if _, ok := archs[witharch[1]]; ok {
-					variable = witharch[0]
+				for _, arch := range l.pkgbuild.Arch {
+					if arch == witharch[1] {
+						variable = witharch[0]
+					}
 				}
 			}
 
