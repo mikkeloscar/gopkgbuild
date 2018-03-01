@@ -68,15 +68,15 @@ func TestVersionComparison(t *testing.T) {
 
 // Test alphaCompare function
 func TestAlphaCompare(t *testing.T) {
-	if alphaCompare("test", "test") != 0 {
+	if alphaCompare([]rune("test"), []rune("test")) != 0 {
 		t.Error("should be 0")
 	}
 
-	if alphaCompare("test", "test123") > 0 {
+	if alphaCompare([]rune("test"), []rune("test123")) > 0 {
 		t.Error("should be less than 0")
 	}
 
-	if alphaCompare("test123", "test") < 0 {
+	if alphaCompare([]rune("test123"), []rune("test")) < 0 {
 		t.Error("should be greater than 0")
 	}
 }
@@ -128,5 +128,20 @@ func TestCompleteVersionString(t *testing.T) {
 func BenchmarkVersionCompare(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		rpmvercmp("1.0", "1.0.0")
+	}
+}
+
+func TestUnicode(t *testing.T) {
+	str := "13:2.0.0.α.r29.g18fc492-1"
+	expected := CompleteVersion{
+		Epoch:   13,
+		Version: "2.0.0.α.r29.g18fc492",
+		Pkgrel:  "1",
+	}
+	version, err := NewCompleteVersion(str)
+	if err != nil {
+		t.Error(err)
+	} else if *version != expected {
+		t.Errorf("%v should be %v", version, expected)
 	}
 }
