@@ -90,27 +90,33 @@ func TestCompleteVersionComparison(t *testing.T) {
 	}
 
 	older := []string{
-		"0-3-4",
-		"1-2-1",
-		"1-2-1.5",
-		"1-1-1",
+		"0:3-4",
+		"1:2-1",
+		"1:2-1.5",
+		"1:1-1",
 	}
 
 	for _, o := range older {
-		if a.Older(o) {
+		if _, err := NewCompleteVersion(o); err != nil {
+			t.Errorf("%s fails to parse %v", o, err)
+		}
+		if a.Older(o) || !a.Newer(o) {
 			t.Errorf("%s should be older than %s", o, a.String())
 		}
 	}
 
 	newer := []string{
-		"2-1-1",
-		"1-3-1",
-		"1-2-3",
-		"1-2-2.1",
+		"2:1-1",
+		"1:3-1",
+		"1:2-3",
+		"1:2-2.1",
 	}
 
 	for _, n := range newer {
-		if a.Newer(n) {
+		if _, err := NewCompleteVersion(n); err != nil {
+			t.Errorf("%s fails to parse %v", n, err)
+		}
+		if a.Newer(n) || !a.Older(n) {
 			t.Errorf("%s should be newer than %s", n, a.String())
 		}
 	}
