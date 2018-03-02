@@ -10,9 +10,10 @@ func TestVersionParsing(t *testing.T) {
 		"a.3_4":     true,
 		"A.2":       true,
 		"a~b~c":     true,
+		"a.2Ø":      true,
+		"2.0.0.α":   true,
 		"_1.2":      false,
 		".2":        false,
-		"a.2Ø":      false,
 		"1.?":       false,
 		"1.-":       false,
 		"1 2":       false,
@@ -180,6 +181,7 @@ func TestRandomCoreSRCINFOs(t *testing.T) {
 		"pip2pkgbuild",
 		"biicode",
 		"teamviewer",
+		"shaman-git",
 	}
 
 	for _, srcinfo := range srcinfos {
