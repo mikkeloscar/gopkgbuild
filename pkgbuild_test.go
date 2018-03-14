@@ -214,7 +214,7 @@ func TestParseDependency(t *testing.T) {
 		t.Errorf("could not parse dependency %s: %s", "bla", err.Error())
 	}
 
-	_, err = parseDependency("linux-mainline-headers==4.6rc1", deps)
+	_, err = parseDependency("linux-mainline-headers=4.6rc1", deps)
 	if err != nil {
 		t.Errorf("could not parse dependency %s: %s", "bla", err.Error())
 	}

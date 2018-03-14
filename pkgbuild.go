@@ -486,7 +486,7 @@ func parseDependency(dep string, deps []*Dependency) ([]*Dependency, error) {
 	}
 
 	switch eq.String() {
-	case "==":
+	case "=":
 		dependency.MinVer = version
 		dependency.MaxVer = version
 	case "<=":
