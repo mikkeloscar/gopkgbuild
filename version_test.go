@@ -120,6 +120,21 @@ func TestCompleteVersionComparison(t *testing.T) {
 			t.Errorf("%s should be newer than %s", n, a.String())
 		}
 	}
+
+	equal := []string{
+		"1:2-2",
+		"1:2",
+	}
+
+	for _, n := range equal {
+		if _, err := NewCompleteVersion(n); err != nil {
+			t.Errorf("%s fails to parse %v", n, err)
+		}
+		if a.Newer(n) || a.Older(n) || !a.Equal(n) {
+			t.Errorf("%s should be equal to %s", n, a.String())
+		}
+	}
+
 }
 
 func TestCompleteVersionString(t *testing.T) {

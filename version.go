@@ -17,11 +17,19 @@ type CompleteVersion struct {
 }
 
 func (c *CompleteVersion) String() string {
+	str := ""
+
 	if c.Epoch > 0 {
-		return fmt.Sprintf("%d:%s-%s", c.Epoch, c.Version, c.Pkgrel)
+		str = fmt.Sprintf("%d:", c.Epoch)
 	}
 
-	return fmt.Sprintf("%s-%s", c.Version, c.Pkgrel)
+	str = fmt.Sprintf("%s%s", str, c.Version)
+
+	if c.Pkgrel != "" {
+		str = fmt.Sprintf("%s-%s", str, c.Pkgrel)
+	}
+
+	return str
 }
 
 // NewCompleteVersion creates a CompleteVersion including basic version, epoch
@@ -115,6 +123,10 @@ func (a *CompleteVersion) cmp(b *CompleteVersion) int8 {
 
 	if b.Version.bigger(a.Version) {
 		return -1
+	}
+
+	if a.Pkgrel == "" || b.Pkgrel == "" {
+		return 0
 	}
 
 	if a.Pkgrel.bigger(b.Pkgrel) {
