@@ -506,6 +506,7 @@ func ParseDeps(deps []string) ([]*Dependency, error) {
 func parseDependency(dep string, deps []*Dependency) ([]*Dependency, error) {
 	var name string
 	var dependency *Dependency
+	index := -1
 
 	if dep == "" {
 		return deps, nil
@@ -525,54 +526,56 @@ func parseDependency(dep string, deps []*Dependency) ([]*Dependency, error) {
 
 	// check if the dependency has been set before
 	name = dep[0:i]
-	for _, d := range deps {
+	for n, d := range deps {
 		if d.Name == name {
-			dependency = d
+			index = n
+			break
 		}
 	}
 
-	if dependency == nil {
-		dependency = &Dependency{
-			Name: name,
-			sgt:  false,
-			slt:  false,
+	dependency = &Dependency{
+		Name: name,
+		sgt:  false,
+		slt:  false,
+	}
+
+	if len(dep) != len(name) {
+		var eq bytes.Buffer
+		for _, c := range dep[i:] {
+			if c == '<' || c == '>' || c == '=' {
+				i++
+				eq.WriteRune(c)
+				continue
+			}
+			break
 		}
+
+		version, err := NewCompleteVersion(dep[i:])
+		if err != nil {
+			return nil, err
+		}
+
+		switch eq.String() {
+		case "=":
+			dependency.MinVer = version
+			dependency.MaxVer = version
+		case "<=":
+			dependency.MaxVer = version
+		case ">=":
+			dependency.MinVer = version
+		case "<":
+			dependency.MaxVer = version
+			dependency.slt = true
+		case ">":
+			dependency.MinVer = version
+			dependency.sgt = true
+		}
+	}
+
+	if index == -1 {
 		deps = append(deps, dependency)
-	}
-
-	if len(dep) == len(name) {
-		return deps, nil
-	}
-
-	var eq bytes.Buffer
-	for _, c := range dep[i:] {
-		if c == '<' || c == '>' || c == '=' {
-			i++
-			eq.WriteRune(c)
-			continue
-		}
-		break
-	}
-
-	version, err := NewCompleteVersion(dep[i:])
-	if err != nil {
-		return nil, err
-	}
-
-	switch eq.String() {
-	case "=":
-		dependency.MinVer = version
-		dependency.MaxVer = version
-	case "<=":
-		dependency.MaxVer = version
-	case ">=":
-		dependency.MinVer = version
-	case "<":
-		dependency.MaxVer = version
-		dependency.slt = true
-	case ">":
-		dependency.MinVer = version
-		dependency.sgt = true
+	} else {
+		deps[index] = deps[index].Restrict(dependency)
 	}
 
 	return deps, nil
