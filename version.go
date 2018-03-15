@@ -104,6 +104,41 @@ func (a *CompleteVersion) Equal(v string) bool {
 	return a.cmp(b) == 0
 }
 
+// Satisfies tests whether or not version fits inside the bounds specified by
+// dep
+func (version *CompleteVersion) Satisfies(dep *Dependency) bool {
+	var cmpMax int8
+	var cmpMin int8
+
+	if dep.MaxVer != nil {
+		cmpMax = version.cmp(dep.MaxVer)
+		if cmpMax == 1 {
+			return false
+		}
+
+		if cmpMax == 0 && dep.slt {
+			return false
+		}
+	}
+
+	if dep.MinVer != nil {
+		if dep.MaxVer == dep.MinVer {
+			cmpMin = cmpMax
+		} else {
+			cmpMin = version.cmp(dep.MinVer)
+		}
+		if cmpMin == -1 {
+			return false
+		}
+
+		if cmpMin == 0 && dep.sgt {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Compare a to b:
 // return 1: a is newer than b
 //        0: a and b are the same version

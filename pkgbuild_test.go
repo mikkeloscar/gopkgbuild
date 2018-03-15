@@ -219,3 +219,82 @@ func TestParseDependency(t *testing.T) {
 		t.Errorf("could not parse dependency %s: %s", "bla", err.Error())
 	}
 }
+
+func TestRestrict(t *testing.T) {
+	equal := func(a, b *Dependency) bool {
+		if a.sgt != b.sgt {
+			return false
+		}
+
+		if a.slt != b.slt {
+			return false
+		}
+
+		if a.MaxVer == nil || b.MaxVer == nil {
+			if a.MaxVer != b.MaxVer {
+				return false
+			}
+		} else if a.MaxVer.String() != b.MaxVer.String() {
+			return false
+		}
+
+		if a.MinVer == nil || b.MinVer == nil {
+			if a.MinVer != b.MinVer {
+				return false
+			}
+		} else if a.MinVer.String() != b.MinVer.String() {
+			return false
+		}
+
+		return true
+	}
+
+	depStrA := []string{
+		"a>=1", "a<=2",
+		"b>=1",
+		"c>50", "c<99",
+		"d>40", "d<50",
+		"e>1-1",
+		"f>1-1",
+		"g>60", "g<100",
+		"h>2:1",
+	}
+
+	depStrB := []string{
+		"a>1", "a<2",
+		"b<2",
+		"c>1", "c<80",
+		"d>1", "d<99",
+		"e>1",
+		"f>1-2",
+		"g=70",
+		"h>1:2",
+	}
+
+	depStrMerged := []string{
+		"a>1", "a<2",
+		"b>=1", "b<2",
+		"c>50", "c<80",
+		"d>40", "d<50",
+		"e>1-1",
+		"f>1-2",
+		"g=70",
+		"h>2:1",
+	}
+
+	depsA, _ := ParseDeps(depStrA)
+	depsB, _ := ParseDeps(depStrB)
+	depsMerged, _ := ParseDeps(depStrMerged)
+
+	for i := range depsA {
+		RestrictedDep1 := depsA[i].Restrict(depsB[i])
+		RestrictedDep2 := depsB[i].Restrict(depsA[i])
+
+		if !equal(depsMerged[i], RestrictedDep1) {
+			t.Errorf("%+v should be %+v", RestrictedDep1, depsMerged[i])
+		}
+		if !equal(depsMerged[i], RestrictedDep2) {
+			t.Errorf("%+v should be %+v", RestrictedDep2, depsMerged[i])
+		}
+	}
+}

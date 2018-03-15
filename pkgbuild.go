@@ -17,6 +17,80 @@ type Dependency struct {
 	slt    bool             // defines if max version is strictly less than
 }
 
+// Restrict merges two dependencies together into a new dependency where the
+// conditions of both a and b are met
+func (a *Dependency) Restrict(b *Dependency) *Dependency {
+	newDep := &Dependency{
+		Name: a.Name,
+	}
+
+	if a.MaxVer != nil || b.MaxVer != nil {
+		newDep.MaxVer = &CompleteVersion{}
+
+		if a.MaxVer == nil {
+			*newDep.MaxVer = *b.MaxVer
+			newDep.slt = b.slt
+		} else if b.MaxVer == nil {
+			*newDep.MaxVer = *a.MaxVer
+			newDep.slt = a.slt
+		} else {
+			cmpMax := a.MaxVer.cmp(b.MaxVer)
+			if cmpMax >= 1 {
+				*newDep.MaxVer = *b.MaxVer
+				newDep.slt = b.slt
+			} else if cmpMax <= -1 {
+				*newDep.MaxVer = *a.MaxVer
+				newDep.slt = a.slt
+			} else if cmpMax == 0 {
+				if len(a.MaxVer.Pkgrel) > len(b.MaxVer.Pkgrel) {
+					*newDep.MaxVer = *a.MaxVer
+				} else {
+					*newDep.MaxVer = *b.MaxVer
+				}
+				if a.slt != b.slt {
+					newDep.slt = true
+				} else {
+					newDep.slt = a.slt
+				}
+			}
+		}
+	}
+
+	if a.MinVer != nil || b.MinVer != nil {
+		newDep.MinVer = &CompleteVersion{}
+
+		if a.MinVer == nil {
+			*newDep.MinVer = *b.MinVer
+			newDep.sgt = b.slt
+		} else if b.MinVer == nil {
+			*newDep.MinVer = *a.MinVer
+			newDep.sgt = a.sgt
+		} else {
+			cmpMin := a.MinVer.cmp(b.MinVer)
+			if cmpMin >= 1 {
+				*newDep.MinVer = *a.MinVer
+				newDep.sgt = a.sgt
+			} else if cmpMin <= -1 {
+				*newDep.MinVer = *b.MinVer
+				newDep.sgt = b.sgt
+			} else if cmpMin == 0 {
+				if len(a.MinVer.Pkgrel) > len(b.MinVer.Pkgrel) {
+					*newDep.MinVer = *a.MinVer
+				} else {
+					*newDep.MinVer = *b.MinVer
+				}
+				if a.sgt != b.sgt {
+					newDep.sgt = true
+				} else {
+					newDep.sgt = a.sgt
+				}
+			}
+		}
+	}
+
+	return newDep
+}
+
 // PKGBUILD is a struct describing a parsed PKGBUILD file.
 // Required fields are:
 //	pkgname

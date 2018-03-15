@@ -145,6 +145,59 @@ func TestCompleteVersionString(t *testing.T) {
 	}
 }
 
+func TestSatisfies(t *testing.T) {
+	deps, _ := ParseDeps([]string{
+		"a>1", "a<2",
+		"b>=1", "b<=2",
+		"c>=1:1", "c<=1:2",
+		"d=1.2.3",
+		"e=1.2.3-1",
+	})
+
+	versionPass := [][]string{
+		{"1.1", "1.9", "1.99", "1.001", "0:1.1"},
+		{"1.1", "1.9", "1.99", "1.001", "1", "2"},
+		{"1:1.1", "1:1.9", "1:1.99", "1:1.001", "1:1", "1:2"},
+		{"1.2.3", "1.2.3-1", "1.2.3-999", "0:1.2.3", "0:1.2.3-1", "0:1.2.3-999"},
+		{"1.2.3-1", "0:1.2.3-1"},
+	}
+
+	versionFail := [][]string{
+		{"0", "0.99", "2.001", "2"},
+		{"0", "0.99", "2.001"},
+		{"0:1.1", "2:1.9", "0:1.99", "2:1.001", "0:1", "2:2", "0:1.0", "2:2.0"},
+		{"1:1.2.3", "1.2.3.0", "1.2.3.1"},
+		{"1:1.2.3-1", "0:1.2.3-2", "1.2.3-3", "1.2.3-4"},
+	}
+
+	for i, dep := range deps {
+		versions := versionPass[i]
+		for _, versionStr := range versions {
+			version, err := NewCompleteVersion(versionStr)
+			if err != nil {
+				t.Errorf("%s fails to parse %v", versionStr, err)
+			}
+			if !version.Satisfies(dep) {
+				t.Errorf("%s should satisfy %+v", version, dep)
+			}
+		}
+	}
+
+	for i, dep := range deps {
+		versions := versionFail[i]
+		for _, versionStr := range versions {
+			version, err := NewCompleteVersion(versionStr)
+			if err != nil {
+				t.Errorf("%s fails to parse %v", versionStr, err)
+			}
+			if version.Satisfies(dep) {
+				t.Errorf("%s should not satisfy %+v", version, dep)
+			}
+		}
+	}
+
+}
+
 // Benchmark rpmvercmp
 func BenchmarkVersionCompare(b *testing.B) {
 	for i := 0; i < b.N; i++ {
