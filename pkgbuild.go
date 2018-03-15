@@ -91,6 +91,34 @@ func (a *Dependency) Restrict(b *Dependency) *Dependency {
 	return newDep
 }
 
+func (dep *Dependency) String() string {
+	str := ""
+	greaterThan := ">"
+	lessThan := "<"
+
+	if !dep.sgt {
+		greaterThan = ">="
+	}
+
+	if !dep.slt {
+		lessThan = "<="
+	}
+
+	if dep.MinVer != nil {
+		str += dep.Name + greaterThan + dep.MinVer.String()
+
+		if dep.MaxVer != nil {
+			str += " "
+		}
+	}
+
+	if dep.MaxVer != nil {
+		str += dep.Name + lessThan + dep.MaxVer.String()
+	}
+
+	return str
+}
+
 // PKGBUILD is a struct describing a parsed PKGBUILD file.
 // Required fields are:
 //	pkgname
