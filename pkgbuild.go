@@ -34,7 +34,7 @@ func (a *Dependency) Restrict(b *Dependency) *Dependency {
 			*newDep.MaxVer = *a.MaxVer
 			newDep.slt = a.slt
 		} else {
-			cmpMax := a.MaxVer.cmp(b.MaxVer)
+			cmpMax := a.MaxVer.Compare(b.MaxVer)
 			if cmpMax >= 1 {
 				*newDep.MaxVer = *b.MaxVer
 				newDep.slt = b.slt
@@ -66,7 +66,7 @@ func (a *Dependency) Restrict(b *Dependency) *Dependency {
 			*newDep.MinVer = *a.MinVer
 			newDep.sgt = a.sgt
 		} else {
-			cmpMin := a.MinVer.cmp(b.MinVer)
+			cmpMin := a.MinVer.Compare(b.MinVer)
 			if cmpMin >= 1 {
 				*newDep.MinVer = *a.MinVer
 				newDep.sgt = a.sgt
