@@ -81,7 +81,7 @@ func (a *CompleteVersion) Older(v string) bool {
 		return false
 	}
 
-	return a.cmp(b) == -1
+	return a.Compare(b) == -1
 }
 
 // Newer returns true if a is newer than the argument version string
@@ -91,7 +91,7 @@ func (a *CompleteVersion) Newer(v string) bool {
 		return false
 	}
 
-	return a.cmp(b) == 1
+	return a.Compare(b) == 1
 }
 
 // Equal returns true if a is equal to the argument version string
@@ -101,7 +101,7 @@ func (a *CompleteVersion) Equal(v string) bool {
 		return false
 	}
 
-	return a.cmp(b) == 0
+	return a.Compare(b) == 0
 }
 
 // Satisfies tests whether or not version fits inside the bounds specified by
@@ -111,7 +111,7 @@ func (version *CompleteVersion) Satisfies(dep *Dependency) bool {
 	var cmpMin int8
 
 	if dep.MaxVer != nil {
-		cmpMax = version.cmp(dep.MaxVer)
+		cmpMax = version.Compare(dep.MaxVer)
 		if cmpMax == 1 {
 			return false
 		}
@@ -125,7 +125,7 @@ func (version *CompleteVersion) Satisfies(dep *Dependency) bool {
 		if dep.MaxVer == dep.MinVer {
 			cmpMin = cmpMax
 		} else {
-			cmpMin = version.cmp(dep.MinVer)
+			cmpMin = version.Compare(dep.MinVer)
 		}
 		if cmpMin == -1 {
 			return false
@@ -143,7 +143,7 @@ func (version *CompleteVersion) Satisfies(dep *Dependency) bool {
 // return 1: a is newer than b
 //        0: a and b are the same version
 //       -1: b is newer than a
-func (a *CompleteVersion) cmp(b *CompleteVersion) int8 {
+func (a *CompleteVersion) Compare(b *CompleteVersion) int8 {
 	if a.Epoch > b.Epoch {
 		return 1
 	}
@@ -182,7 +182,7 @@ func (a *CompleteVersion) cmp(b *CompleteVersion) int8 {
 //
 // This is based on the rpmvercmp function used in libalpm
 // https://projects.archlinux.org/pacman.git/tree/lib/libalpm/version.c
-func rpmvercmp(av, bv Version) int {
+func (av Version) Compare(bv Version) int {
 	if av == bv {
 		return 0
 	}
@@ -320,7 +320,7 @@ func alphaCompare(a, b []rune) int8 {
 
 // check if version number v is bigger than v2
 func (v Version) bigger(v2 Version) bool {
-	return rpmvercmp(v, v2) == 1
+	return v.Compare(v2) == 1
 }
 
 // isAlphaNumeric reports whether c is an alpha character or digit

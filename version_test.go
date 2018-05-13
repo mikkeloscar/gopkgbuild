@@ -201,7 +201,7 @@ func TestSatisfies(t *testing.T) {
 // Benchmark rpmvercmp
 func BenchmarkVersionCompare(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		rpmvercmp("1.0", "1.0.0")
+		Version("1.0").Compare("1.0.0")
 	}
 }
 
