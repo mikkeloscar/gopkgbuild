@@ -97,10 +97,9 @@ func TestCompleteVersionComparison(t *testing.T) {
 	}
 
 	for _, o := range older {
-		if _, err := NewCompleteVersion(o); err != nil {
+		if b, err := NewCompleteVersion(o); err != nil {
 			t.Errorf("%s fails to parse %v", o, err)
-		}
-		if a.Older(o) || !a.Newer(o) {
+		} else if a.Older(b) || !a.Newer(b) {
 			t.Errorf("%s should be older than %s", o, a.String())
 		}
 	}
@@ -113,10 +112,9 @@ func TestCompleteVersionComparison(t *testing.T) {
 	}
 
 	for _, n := range newer {
-		if _, err := NewCompleteVersion(n); err != nil {
+		if b, err := NewCompleteVersion(n); err != nil {
 			t.Errorf("%s fails to parse %v", n, err)
-		}
-		if a.Newer(n) || !a.Older(n) {
+		} else if a.Newer(b) || !a.Older(b) {
 			t.Errorf("%s should be newer than %s", n, a.String())
 		}
 	}
@@ -127,10 +125,9 @@ func TestCompleteVersionComparison(t *testing.T) {
 	}
 
 	for _, n := range equal {
-		if _, err := NewCompleteVersion(n); err != nil {
+		if b, err := NewCompleteVersion(n); err != nil {
 			t.Errorf("%s fails to parse %v", n, err)
-		}
-		if a.Newer(n) || a.Older(n) || !a.Equal(n) {
+		} else if a.Newer(b) || a.Older(b) || !a.Equal(b) {
 			t.Errorf("%s should be equal to %s", n, a.String())
 		}
 	}
