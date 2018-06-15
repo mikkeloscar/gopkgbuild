@@ -182,6 +182,7 @@ func TestRandomCoreSRCINFOs(t *testing.T) {
 		"biicode",
 		"teamviewer",
 		"shaman-git",
+		"bash-snippets",
 	}
 
 	for _, srcinfo := range srcinfos {
