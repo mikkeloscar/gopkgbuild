@@ -37,9 +37,9 @@ func TestVersionParsing(t *testing.T) {
 // Test complete-version parsing
 func TestCompleteVersionParsing(t *testing.T) {
 	versions := map[string]*CompleteVersion{
-		"1:1.0beta": &CompleteVersion{Version("1.0beta"), 1, ""},
-		"1.0":       &CompleteVersion{Version("1.0"), 0, ""},
-		"2.3-2":     &CompleteVersion{Version("2.3"), 0, "2"},
+		"1:1.0beta": {Version("1.0beta"), 1, ""},
+		"1.0":       {Version("1.0"), 0, ""},
+		"2.3-2":     {Version("2.3"), 0, "2"},
 		"1::":       nil,
 		"4.3--1":    nil,
 		"4.1-a":     nil,
@@ -183,6 +183,7 @@ func TestRandomCoreSRCINFOs(t *testing.T) {
 		"teamviewer",
 		"shaman-git",
 		"bash-snippets",
+		"pulseaudio-ctl",
 	}
 
 	for _, srcinfo := range srcinfos {

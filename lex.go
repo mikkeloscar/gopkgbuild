@@ -73,6 +73,7 @@ const (
 	itemSha256sums   // sha256sums variable
 	itemSha384sums   // sha384sums variable
 	itemSha512sums   // sha512sums variable
+	itemB2sums       // b2sums variable
 	itemValidpgpkeys // validpgpkeys variable
 )
 
@@ -108,6 +109,7 @@ var variables = map[string]itemType{
 	"sha256sums":   itemSha256sums,
 	"sha384sums":   itemSha384sums,
 	"sha512sums":   itemSha512sums,
+	"b2sums":       itemB2sums,
 	"validpgpkeys": itemValidpgpkeys,
 }
 

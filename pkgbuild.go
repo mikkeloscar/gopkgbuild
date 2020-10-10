@@ -159,6 +159,7 @@ type PKGBUILD struct {
 	Sha256sums   []string
 	Sha384sums   []string
 	Sha512sums   []string
+	B2sums       []string
 	Validpgpkeys []string
 }
 
@@ -452,6 +453,9 @@ Loop:
 		case itemSha512sums:
 			next = lexer.nextItem()
 			pkgbuild.Sha512sums = append(pkgbuild.Sha512sums, next.val)
+		case itemB2sums:
+			next = lexer.nextItem()
+			pkgbuild.B2sums = append(pkgbuild.B2sums, next.val)
 		case itemValidpgpkeys:
 			next = lexer.nextItem()
 			pkgbuild.Validpgpkeys = append(pkgbuild.Validpgpkeys, next.val)
