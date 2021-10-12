@@ -473,6 +473,7 @@ Loop:
 
 // parse and validate a version string
 func parseVersion(s string) (Version, error) {
+	s = strings.TrimSpace(s)
 	if validPkgver(s) {
 		return Version(s), nil
 	}
